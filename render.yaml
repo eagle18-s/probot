@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: astrol-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: RENDER_EXTERNAL_URL
+        sync: false
