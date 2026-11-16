@@ -204,23 +204,172 @@ module.exports = {
       await message.channel.send({ embeds: [emb] });
     }
 
-    // ===== YARDIM =====
-    if (cmd === 'yardim' || cmd === 'help') {
-      const embed = new EmbedBuilder()
-        .setTitle('📚 ASTROL Yardım')
-        .setDescription(`
-**🛡️ Moderasiya:** \`.ban\`, \`.unban\`, \`.mute\`, \`.unmute\`, \`.kick\`, \`.warn\`, \`.warnings\`, \`.clearwarns\`, \`.sil\`, \`.yavaş-mod\`, \`.case\`, \`.cases\`
-**🔒 Jail:** \`.jail\`, \`.unjail\`, \`.jailrol\`, \`.üyerol\`, \`.rolver\`, \`.rolal\`
-**⭐ XP:** \`.seviye\`, \`.topxp\`, \`.xprofil\`, \`.stat\`
-**🎉 Çekiliş:** \`.çekiliş <süre> <say> <ödül>\`
-**🎫 Ticket:** \`.ticket <səbəb>\`
-**📊 Reaction Roles:** \`.reactionrole <mesajID> <rol> <emoji> [label]\`
-**📈 Poll:** \`.anket <sual> | <opt1> | <opt2> ...\`
-**📨 Invites:** \`.davetler\`, \`.davetler @user\`
-**⚙️ Sistem:** \`.logsetup\`, \`.welcomesetup\`, \`.küfür-ekle\`, \`.küfür-sil\`, \`.linkistisna\`, \`.özelodasetup\`, \`.sunucubilgi\`, \`.avatar\`, \`.snipe\`, \`.kanal-yarat\`, \`.kanal-sil\`, \`.embed\`, \`.mesaj-gönder\`
-        `)
-        .setColor(0x5865F2);
-      message.reply({ embeds: [embed] });
+// ===== YARDIM (Butonlu, Kateqoriyalı) =====
+if (cmd === 'yardim' || cmd === 'help') {
+  const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } = require('discord.js');
+
+  // Kateqoriyalar və komandalar
+  const kategoriler = {
+    moderasiya: {
+      label: 'Moderasiya',
+      emoji: '🛡️',
+      color: 0xff0000,
+      desc: 'Ban, mute, kick, uyarı və s.',
+      commands: [
+        { cmd: '.ban @kişi [səbəb]', desc: 'İstifadəçini banlayır' },
+        { cmd: '.unban <ID>', desc: 'Banı qaldırır' },
+        { cmd: '.mute @üzvə <süre>', desc: 'Timeout verir (10m, 1h)' },
+        { cmd: '.unmute @üzvə', desc: 'Timeout-u qaldırır' },
+        { cmd: '.kick @üzvə [səbəb]', desc: 'Sunucudan atır' },
+        { cmd: '.warn @üzvə [səbəb]', desc: 'Uyarı verir' },
+        { cmd: '.warnings @üzvə', desc: 'Uyarıları göstərir' },
+        { cmd: '.clearwarns @üzvə', desc: 'Uyarıları silir' },
+        { cmd: '.sil <sayı>', desc: 'Mesaj silir (1-100)' },
+        { cmd: '.yavaş-mod <saniyə>', desc: 'Yavaş mod açır' }
+      ]
+    },
+    jail: {
+      label: 'Jail & Rol',
+      emoji: '🔒',
+      color: 0x8b0000,
+      desc: 'Jail atma, rol vermə/alma',
+      commands: [
+        { cmd: '.jail @üzvə', desc: 'Jail-ə atır' },
+        { cmd: '.unjail @üzvə', desc: 'Jail-dən çıxarır' },
+        { cmd: '.jailrol <ID>', desc: 'Jail rolunu ayarlayır' },
+        { cmd: '.üyerol @rol', desc: 'Üzvə rolunu ayarlayır' },
+        { cmd: '.rolver @üzvə @rol', desc: 'Rol verir' },
+        { cmd: '.rolal @üzvə @rol', desc: 'Rol alır' }
+      ]
+    },
+    xp: {
+      label: 'XP & Səviyyə',
+      emoji: '⭐',
+      color: 0x5865F2,
+      desc: 'Səviyyə, XP, profil kartları',
+      commands: [
+        { cmd: '.səviyyə [@üzvə]', desc: 'Səviyyə və XP göstərir' },
+        { cmd: '.topxp', desc: 'XP sıralamasını göstərir' },
+        { cmd: '.xprofil [@üzvə]', desc: 'Şəkilli XP profil kartı' },
+        { cmd: '.stat [@üzvə]', desc: 'Mesaj və səs statistikası' }
+      ]
+    },
+    sistem: {
+      label: 'Sistem',
+      emoji: '⚙️',
+      color: 0x00ff00,
+      desc: 'Log, qarşılama, kanallar',
+      commands: [
+        { cmd: '.logsetup #kanal', desc: 'Log kanalını ayarlayır' },
+        { cmd: '.welcomesetup #kanal', desc: 'Qarşılama kanalını ayarlayır' },
+        { cmd: '.küfür-ekle <söz>', desc: 'Qadağan söz əlavə edir' },
+        { cmd: '.linkistisna #kanal', desc: 'Link qadağasından azad edir' },
+        { cmd: '.özelodasetup', desc: 'Özel səs otaqları qurur' },
+        { cmd: '.kanal-yarat <ad>', desc: 'Kanal yaradır' },
+        { cmd: '.embed Başlıq | Mətn', desc: 'Embed göndərir' }
+      ]
+    },
+    eylence: {
+      label: 'Əyləncə',
+      emoji: '🎉',
+      color: 0xffaa00,
+      desc: 'Çekiliş, anket, ticket',
+      commands: [
+        { cmd: '.çekiliş <süre> <say> <ödül>', desc: 'Çekiliş başladır' },
+        { cmd: '.anket Sual | Variant1 | Variant2', desc: 'Anket yaradır' },
+        { cmd: '.ticket <səbəb>', desc: 'Dəstək taleyi açır' }
+      ]
+    },
+    davet: {
+      label: 'Dəvətlər',
+      emoji: '📨',
+      color: 0x2b2d31,
+      desc: 'Kim kimi dəvət edib?',
+      commands: [
+        { cmd: '.davetler', desc: 'Dəvət sıralamasını göstərir' },
+        { cmd: '.davetler @üzvə', desc: 'İstifadəçinin dəvətlərini göstərir' }
+      ]
     }
-  }
-};
+  };
+
+  // Ana menyu embed
+  const anaEmbed = new EmbedBuilder()
+    .setTitle('📚 ASTROL Kömək Mərkəzi')
+    .setDescription('Aşağıdakı menyudan kateqoriya seçərək komandalara baxa bilərsiniz.\n\n**Kateqoriyalar:**\n🛡️ Moderasiya • 🔒 Jail & Rol • ⭐ XP & Səviyyə\n⚙️ Sistem • 🎉 Əyləncə • 📨 Dəvətlər')
+    .setColor(0x5865F2)
+    .setFooter({ text: 'ASTROL Bot • Butonlara basaraq keçid edin' })
+    .setThumbnail(client.user.displayAvatarURL());
+
+  // Select Menu (Kateqoriya seçimi)
+  const menu = new StringSelectMenuBuilder()
+    .setCustomId('help_menu')
+    .setPlaceholder('📂 Kateqoriya seçin...')
+    .addOptions(
+      Object.entries(kategoriler).map(([key, val]) => ({
+        label: val.label,
+        description: val.desc,
+        value: key,
+        emoji: val.emoji
+      }))
+    );
+
+  // Alt sıra: Ana səhifə butonu
+  const anaRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('help_home')
+      .setLabel('Ana Səhifə')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('🏠')
+  );
+
+  const msg = await message.reply({ 
+    embeds: [anaEmbed], 
+    components: [new ActionRowBuilder().addComponents(menu), anaRow] 
+  });
+
+  // Collector (Sonsuz işləyir - 15 dəqiqə)
+  const collector = msg.createMessageComponentCollector({
+    filter: i => i.user.id === message.author.id,
+    time: 15 * 60 * 1000
+  });
+
+  collector.on('collect', async (i) => {
+    // Ana səhifəyə dön
+    if (i.customId === 'help_home') {
+      return i.update({ 
+        embeds: [anaEmbed], 
+        components: [new ActionRowBuilder().addComponents(menu), anaRow] 
+      });
+    }
+
+    // Kateqoriya seçildi
+    if (i.customId === 'help_menu') {
+      const secilen = i.values[0];
+      const kat = kategoriler[secilen];
+
+      const embed = new EmbedBuilder()
+        .setTitle(`${kat.emoji} ${kat.label} Komandaları`)
+        .setDescription(kat.commands.map(c => `**${c.cmd}**\n> ${c.desc}`).join('\n\n'))
+        .setColor(kat.color)
+        .setFooter({ text: 'ASTROL Bot • Ana səhifəyə dönmək üçün 🏠 düyməsinə basın' });
+
+      // Geri qayıtmaq üçün buton
+      const geriRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('help_home')
+          .setLabel('Ana Səhifə')
+          .setStyle(ButtonStyle.Secondary)
+          .setEmoji('🏠')
+      );
+
+      await i.update({ 
+        embeds: [embed], 
+        components: [new ActionRowBuilder().addComponents(menu), geriRow] 
+      });
+    }
+  });
+
+  collector.on('end', () => {
+    msg.edit({ components: [] }).catch(() => {});
+  });
+                     }
