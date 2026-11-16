@@ -2,13 +2,18 @@
   "name": "astrol-bot",
   "version": "2.0.0",
   "main": "index.js",
-  "engines": { "node": ">=18.0.0" },
-  "scripts": { "start": "node index.js" },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "discord.js": "^14.14.1",
     "express": "^4.18.2",
     "ms": "^2.1.3",
     "@napi-rs/canvas": "^0.1.44",
-    "@discordjs/voice": "^0.17.0"
+    "@discordjs/voice": "^0.17.0",
+    "dotenv": "^16.4.5"
   }
 }
