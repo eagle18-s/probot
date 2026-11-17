@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// Google-un pulsuz təbəqəsi üçün sabit mövcud olan Flash modelindən istifadə edirik
 const MODEL = process.env.AI_MODEL || 'gemini-2.5-flash';
 
 // ============ KOD OXUYUCU ============
@@ -124,8 +125,16 @@ function geminiRequest(messages, tools = null) {
 
     const body = {
       model: MODEL,
-      messages: messages
+      messages: messages,
+      // 🔴 Əlavə edilən hissə: Təhlükəsizlik filtrlərini söndür
+      safety_settings: [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'OFF' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'OFF' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'OFF' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'OFF' }
+      ]
     };
+    
     if (tools && tools.length) {
       body.tools = tools;
       body.tool_choice = 'auto';
