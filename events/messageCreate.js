@@ -1,10 +1,7 @@
 const { PermissionFlagsBits, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const storage = require('../utils/storage');
-const { efendimLog } = require('../utils/logger');
-
 
 const spamMap = new Map();
-const aiHistory = new Map(); // kanal başına söhbət tarixçəsi
 
 // Yaddaş təmizləmə
 setInterval(() => {
@@ -20,6 +17,8 @@ module.exports = {
   name: 'messageCreate',
   async execute(message, client) {
     if (!message.guild || message.author.bot) return;
+    
+    // Config-i hər dəfə yükləyirik
     const config = storage.load('config', {});
     const gcfg = config[message.guild.id] || {};
     const now = Date.now();
@@ -62,53 +61,6 @@ module.exports = {
       await message.member.timeout(30000, 'Spam').catch(() => {});
       await message.channel.send(`${message.author} spam yaptığı için 30s timeout yedi.`).catch(() => {});
       spamMap.set(skey, []);
-    }
-
-    // ===== AI (Söhbət) =====
-    // 1) Bot mention edilibsə cavab ver
-    // 2) `.ai <sual>` komandası
-    // 3) `.sor <sual>` komandası
-    const aiCommand = message.content.startsWith('.ai ') || message.content.startsWith('.sor ');
-    const aiMention = message.mentions.has(client.user.id);
-
-    if (aiCommand || aiMention) {
-      let prompt = message.content;
-      if (aiCommand) {
-        prompt = message.content.slice(4).trim();
-      } else if (aiMention) {
-        prompt = message.content.replace(`<@${client.user.id}>`, '').replace(`<@!${client.user.id}>`, '').trim();
-      }
-      if (!prompt) prompt = 'Salam!';
-
-      await message.channel.sendTyping().catch(() => {});
-      const key = `${message.channel.id}-${message.author.id}`;
-      const hist = aiHistory.get(key) || [];
-
-      try {
-        const answer = await askAI(prompt, {
-          message,
-          client,
-          guild: message.guild,
-          member: message.member
-        }, hist);
-
-        // Tarixçəyə əlavə et
-        hist.push({ role: 'user', content: prompt });
-        hist.push({ role: 'assistant', content: answer });
-        aiHistory.set(key, hist.slice(-20)); // son 20 mesaj
-
-        // Uzun cavabı böl
-        if (answer.length > 1900) {
-          const chunks = answer.match(/[\s\S]{1,1900}/g);
-          for (const c of chunks) await message.reply(c);
-        } else {
-          await message.reply(answer);
-        }
-      } catch (e) {
-        console.error('[AI]', e);
-        message.reply(`❌ AI xətası: ${e.message.slice(0, 200)}`);
-      }
-      return;
     }
 
     // ===== Komanda =====
