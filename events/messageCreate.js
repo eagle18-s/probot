@@ -1,14 +1,12 @@
-const { PermissionFlagsBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { PermissionFlagsBits, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const storage = require('../utils/storage');
 const { efendimLog } = require('../utils/logger');
-const { xpForLevel, formatTime } = require('../utils/helpers');
-const { createXPProfileCard, createStatCard } = require('../utils/canvas');
-const { AttachmentBuilder } = require('discord.js');
+const { askAI } = require('../utils/ai');
 
 const spamMap = new Map();
-const xpCooldown = new Map();
+const aiHistory = new Map(); // kanal başına söhbət tarixçəsi
 
-// Təmizləmə (yaddaş sızması qarşısı)
+// Yaddaş təmizləmə
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of spamMap) {
@@ -16,28 +14,7 @@ setInterval(() => {
     if (filtered.length) spamMap.set(k, filtered);
     else spamMap.delete(k);
   }
-  for (const [k, v] of xpCooldown) {
-    if (now - v > 60000) xpCooldown.delete(k);
-  }
 }, 60000);
-
-function getUserXP(guildId, userId) {
-  const xpData = storage.load('xp', {});
-  if (!xpData[guildId]) xpData[guildId] = {};
-  if (!xpData[guildId][userId]) {
-    xpData[guildId][userId] = { xp: 0, level: 0, messages: 0, voiceTime: 0, lastMessage: 0 };
-  }
-  return { xpData, user: xpData[guildId][userId] };
-}
-
-function addXP(guildId, userId, amount) {
-  const { xpData, user } = getUserXP(guildId, userId);
-  user.xp += amount;
-  let leveledUp = false;
-  while (user.xp >= xpForLevel(user.level + 1)) { user.level++; leveledUp = true; }
-  storage.save('xp', xpData);
-  return { user, leveledUp };
-}
 
 module.exports = {
   name: 'messageCreate',
@@ -46,19 +23,6 @@ module.exports = {
     const config = storage.load('config', {});
     const gcfg = config[message.guild.id] || {};
     const now = Date.now();
-
-    // ===== XP =====
-    const key = `${message.guild.id}-${message.author.id}`;
-    if (!xpCooldown.has(key) || now - xpCooldown.get(key) > 15000) {
-      xpCooldown.set(key, now);
-      const { xpData, user } = getUserXP(message.guild.id, message.author.id);
-      user.messages++;
-      user.lastMessage = now;
-      storage.save('xp', xpData);
-      const xpGain = Math.floor(Math.random() * 11) + 10;
-      const { leveledUp, user: updated } = addXP(message.guild.id, message.author.id, xpGain);
-      if (leveledUp) message.channel.send(`🎉 Tebrikler ${message.author}! **Seviye ${updated.level}** oldun!`).catch(() => {});
-    }
 
     // ===== Küfür =====
     const küfürler = storage.load('küfürler', []);
@@ -100,6 +64,53 @@ module.exports = {
       spamMap.set(skey, []);
     }
 
+    // ===== AI (Söhbət) =====
+    // 1) Bot mention edilibsə cavab ver
+    // 2) `.ai <sual>` komandası
+    // 3) `.sor <sual>` komandası
+    const aiCommand = message.content.startsWith('.ai ') || message.content.startsWith('.sor ');
+    const aiMention = message.mentions.has(client.user.id);
+
+    if (aiCommand || aiMention) {
+      let prompt = message.content;
+      if (aiCommand) {
+        prompt = message.content.slice(4).trim();
+      } else if (aiMention) {
+        prompt = message.content.replace(`<@${client.user.id}>`, '').replace(`<@!${client.user.id}>`, '').trim();
+      }
+      if (!prompt) prompt = 'Salam!';
+
+      await message.channel.sendTyping().catch(() => {});
+      const key = `${message.channel.id}-${message.author.id}`;
+      const hist = aiHistory.get(key) || [];
+
+      try {
+        const answer = await askAI(prompt, {
+          message,
+          client,
+          guild: message.guild,
+          member: message.member
+        }, hist);
+
+        // Tarixçəyə əlavə et
+        hist.push({ role: 'user', content: prompt });
+        hist.push({ role: 'assistant', content: answer });
+        aiHistory.set(key, hist.slice(-20)); // son 20 mesaj
+
+        // Uzun cavabı böl
+        if (answer.length > 1900) {
+          const chunks = answer.match(/[\s\S]{1,1900}/g);
+          for (const c of chunks) await message.reply(c);
+        } else {
+          await message.reply(answer);
+        }
+      } catch (e) {
+        console.error('[AI]', e);
+        message.reply(`❌ AI xətası: ${e.message.slice(0, 200)}`);
+      }
+      return;
+    }
+
     // ===== Komanda =====
     if (!message.content.startsWith(client.PREFIX)) return;
     const args = message.content.slice(client.PREFIX.length).trim().split(/ +/);
@@ -108,7 +119,7 @@ module.exports = {
     if (!cmd) return;
 
     try {
-      await cmd.execute(message, args, client, { config, gcfg, getUserXP, addXP });
+      await cmd.execute(message, args, client, { config, gcfg });
     } catch (e) {
       console.error(`[cmd:${commandName}]`, e);
       message.reply('❌ Komanda işlərkən xəta oldu.').catch(() => {});
