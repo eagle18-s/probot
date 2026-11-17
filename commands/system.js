@@ -200,17 +200,7 @@ module.exports = {
             { cmd: '.rolal @üzvə @rol', desc: 'Rol alır' }
           ]
         },
-        ai: {
-          label: 'AI & Söhbət', emoji: '🤖', color: 0x00b894, desc: 'OpenRouter əsaslı AI',
-          commands: [
-            { cmd: '.ai <sual>', desc: 'AI-a sual ver' },
-            { cmd: '.sor <sual>', desc: 'AI-a sual ver (alternativ)' },
-            { cmd: '@ASTROL <sual>', desc: 'Botu mention edərək söhbət et' },
-            { cmd: 'Nümunə: ".ai sən nə edə bilərsən?"', desc: 'AI özünü tanıdır' },
-            { cmd: 'Nümunə: ".ai kodu göstər"', desc: 'AI öz kodunu oxuyur' },
-            { cmd: 'Nümunə: ".ai @user banla"', desc: 'AI komanda icra edir (admin)' }
-          ]
-        },
+        
         sistem: {
           label: 'Sistem', emoji: '⚙️', color: 0x00ff00, desc: 'Log, kanal, embed',
           commands: [
