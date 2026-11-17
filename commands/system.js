@@ -10,29 +10,22 @@ module.exports = {
     if (!config[message.guild.id]) config[message.guild.id] = {};
     const gcfg = config[message.guild.id];
 
-    // ===== LOGSETUP =====
     if (cmd === 'logsetup') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi gerekli.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin yetkisi.');
       const ch = message.mentions.channels.first();
       if (!ch) return message.reply('❌ `.logsetup #kanal`');
-      gcfg.logChannel = ch.id;
-      storage.save('config', config);
+      gcfg.logChannel = ch.id; storage.save('config', config);
       message.reply(`✅ Log kanalı: ${ch}`);
     }
 
-    // ===== WELCOMESETUP =====
     if (cmd === 'welcomesetup') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi gerekli.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin yetkisi.');
       const ch = message.mentions.channels.first();
       if (!ch) return message.reply('❌ `.welcomesetup #kanal`');
-      gcfg.welcomeLeaveChannel = ch.id;
-      storage.save('config', config);
+      gcfg.welcomeLeaveChannel = ch.id; storage.save('config', config);
       message.reply(`✅ Welcome/Leave kanalı: ${ch}`);
     }
 
-    // ===== İSTATİSTİK =====
     if (cmd === 'istatistik') {
       await message.guild.members.fetch().catch(() => {});
       const online = message.guild.members.cache.filter(m => m.presence?.status === 'online').size;
@@ -51,12 +44,10 @@ module.exports = {
           { name: '🚀 Boost', value: `${message.guild.premiumSubscriptionCount || 0}`, inline: true },
           { name: '📁 Kanallar', value: `${message.guild.channels.cache.size}`, inline: true },
           { name: '🎭 Rollar', value: `${message.guild.roles.cache.size}`, inline: true }
-        )
-        .setColor(0x5865F2).setTimestamp();
+        ).setColor(0x5865F2).setTimestamp();
       message.reply({ embeds: [embed] });
     }
 
-    // ===== SUNUCUBİLGİ =====
     if (cmd === 'sunucubilgi') {
       const owner = await message.guild.fetchOwner();
       const embed = new EmbedBuilder()
@@ -68,18 +59,15 @@ module.exports = {
           { name: 'Rol', value: `${message.guild.roles.cache.size}`, inline: true },
           { name: 'Kanal', value: `${message.guild.channels.cache.size}`, inline: true },
           { name: 'Qurulma', value: `<t:${Math.floor(message.guild.createdTimestamp / 1000)}:R>`, inline: true }
-        )
-        .setColor(0x5865F2);
+        ).setColor(0x5865F2);
       message.reply({ embeds: [embed] });
     }
 
-    // ===== AVATAR =====
     if (cmd === 'avatar') {
       const u = message.mentions.users.first() || message.author;
       message.reply({ embeds: [new EmbedBuilder().setTitle(`${u.tag}`).setImage(u.displayAvatarURL({ size: 1024, dynamic: true })).setColor(0x5865F2)] });
     }
 
-    // ===== SNIPE =====
     if (cmd === 'snipe') {
       const snipe = storage.load('snipe', {});
       const list = snipe[message.channel.id];
@@ -93,34 +81,27 @@ module.exports = {
       message.reply({ embeds: [embed] });
     }
 
-    // ===== KÜFÜR =====
     if (cmd === 'küfür-ekle') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const w = args.join(' ').toLowerCase().trim();
       if (!w) return message.reply('❌ Söz yaz.');
       const list = storage.load('küfürler', []);
       if (list.includes(w)) return message.reply('❌ Artıq var.');
-      list.push(w);
-      storage.save('küfürler', list);
+      list.push(w); storage.save('küfürler', list);
       message.reply(`✅ \`${w}\` əlavə edildi.`);
     }
     if (cmd === 'küfür-sil') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const w = args.join(' ').toLowerCase().trim();
       const list = storage.load('küfürler', []);
       const i = list.indexOf(w);
       if (i === -1) return message.reply('❌ Tapılmadı.');
-      list.splice(i, 1);
-      storage.save('küfürler', list);
+      list.splice(i, 1); storage.save('küfürler', list);
       message.reply(`✅ \`${w}\` silindi.`);
     }
 
-    // ===== LINK İSTİSNA =====
     if (cmd === 'linkistisna') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first() || message.channel;
       if (!gcfg.linkExceptions) gcfg.linkExceptions = [];
       if (gcfg.linkExceptions.includes(ch.id)) {
@@ -128,29 +109,21 @@ module.exports = {
         storage.save('config', config);
         return message.reply(`✅ ${ch} artıq istisna deyil.`);
       }
-      gcfg.linkExceptions.push(ch.id);
-      storage.save('config', config);
+      gcfg.linkExceptions.push(ch.id); storage.save('config', config);
       message.reply(`✅ ${ch} istisna edildi.`);
     }
 
-    // ===== ÖZEL ODA =====
     if (cmd === 'özelodasetup') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const cat = await message.guild.channels.create({ name: 'ÖZEL ODALAR', type: ChannelType.GuildCategory });
-      const setup = await message.guild.channels.create({
-        name: '➕ oda-oluştur', type: ChannelType.GuildVoice, parent: cat.id, userLimit: 1
-      });
-      gcfg.özelOdaCategory = cat.id;
-      gcfg.özelOdaSetupChannel = setup.id;
+      const setup = await message.guild.channels.create({ name: '➕ oda-oluştur', type: ChannelType.GuildVoice, parent: cat.id, userLimit: 1 });
+      gcfg.özelOdaCategory = cat.id; gcfg.özelOdaSetupChannel = setup.id;
       storage.save('config', config);
       message.reply('✅ Özel oda sistemi quruldu!');
     }
 
-    // ===== KANAL YARAT =====
     if (cmd === 'kanal-yarat') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const name = args[0];
       const tip = (args[1] || '').toLowerCase();
       if (!name || !['herkeseaçık', 'herkeseacik', 'kilitli'].includes(tip))
@@ -166,10 +139,8 @@ module.exports = {
       message.reply(`✅ Kanal: ${ch} (${isLocked ? 'Kilitli' : 'Açıq'})`);
     }
 
-    // ===== KANAL SİL =====
     if (cmd === 'kanal-sil') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first();
       if (!ch) return message.reply('❌ `.kanal-sil #kanal`');
       const n = ch.name;
@@ -177,10 +148,8 @@ module.exports = {
       message.reply(`✅ **${n}** silindi.`);
     }
 
-    // ===== MESAJ GÖNDƏR =====
     if (cmd === 'mesaj-gönder') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first();
       if (!ch) return message.reply('❌ `.mesaj-gönder #kanal mətn`');
       const content = args.slice(1).join(' ');
@@ -189,10 +158,8 @@ module.exports = {
       message.reply(`✅ Göndərildi: ${ch}`);
     }
 
-    // ===== EMBED =====
     if (cmd === 'embed') {
-      if (!message.member.permissions.has(PermissionFlagsBits.Administrator))
-        return message.reply('❌ Admin yetkisi.');
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const raw = args.join(' ');
       const parts = raw.split('|').map(s => s.trim());
       if (parts.length < 2) return message.reply('❌ `.embed Başlıq | Mətn | [şəkil_url]`');
@@ -204,7 +171,7 @@ module.exports = {
       await message.channel.send({ embeds: [emb] });
     }
 
-    // ===== YARDIM (Butonlu və Menyulu) =====
+    // ===== YARDIM (Butonlu və Menyulu - XP SİLİNDİ, AI ƏLAVƏ OLUNDU) =====
     if (cmd === 'yardim' || cmd === 'help') {
       const kategoriler = {
         moderasiya: {
@@ -233,13 +200,15 @@ module.exports = {
             { cmd: '.rolal @üzvə @rol', desc: 'Rol alır' }
           ]
         },
-        xp: {
-          label: 'XP & Səviyyə', emoji: '⭐', color: 0x5865F2, desc: 'Səviyyə və XP',
+        ai: {
+          label: 'AI & Söhbət', emoji: '🤖', color: 0x00b894, desc: 'OpenRouter əsaslı AI',
           commands: [
-            { cmd: '.səviyyə [@üzvə]', desc: 'Səviyyəni göstərir' },
-            { cmd: '.topxp', desc: 'XP sıralaması' },
-            { cmd: '.xprofil [@üzvə]', desc: 'XP profil kartı' },
-            { cmd: '.stat [@üzvə]', desc: 'Statistika kartı' }
+            { cmd: '.ai <sual>', desc: 'AI-a sual ver' },
+            { cmd: '.sor <sual>', desc: 'AI-a sual ver (alternativ)' },
+            { cmd: '@ASTROL <sual>', desc: 'Botu mention edərək söhbət et' },
+            { cmd: 'Nümunə: ".ai sən nə edə bilərsən?"', desc: 'AI özünü tanıdır' },
+            { cmd: 'Nümunə: ".ai kodu göstər"', desc: 'AI öz kodunu oxuyur' },
+            { cmd: 'Nümunə: ".ai @user banla"', desc: 'AI komanda icra edir (admin)' }
           ]
         },
         sistem: {
@@ -273,7 +242,7 @@ module.exports = {
 
       const anaEmbed = new EmbedBuilder()
         .setTitle('📚 ASTROL Kömək Mərkəzi')
-        .setDescription('Aşağıdakı menyudan kateqoriya seçərək komandalara baxa bilərsiniz.\n\n**Kateqoriyalar:**\n🛡️ Moderasiya • 🔒 Jail & Rol • ⭐ XP & Səviyyə\n⚙️ Sistem • 🎉 Əyləncə • 📨 Dəvətlər')
+        .setDescription('Aşağıdakı menyudan kateqoriya seçərək komandalara baxa bilərsiniz.\n\n**Kateqoriyalar:**\n🛡️ Moderasiya • 🔒 Jail & Rol • 🤖 AI & Söhbət\n⚙️ Sistem • 🎉 Əyləncə • 📨 Dəvətlər')
         .setColor(0x5865F2)
         .setFooter({ text: 'ASTROL Bot • Butonlara basaraq keçid edin' })
         .setThumbnail(client.user.displayAvatarURL());
@@ -281,58 +250,35 @@ module.exports = {
       const menu = new StringSelectMenuBuilder()
         .setCustomId('help_menu')
         .setPlaceholder('📂 Kateqoriya seçin...')
-        .addOptions(
-          Object.entries(kategoriler).map(([key, val]) => ({
-            label: val.label, description: val.desc, value: key, emoji: val.emoji
-          }))
-        );
+        .addOptions(Object.entries(kategoriler).map(([k, v]) => ({ label: v.label, description: v.desc, value: k, emoji: v.emoji })));
 
       const anaRow = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId('help_home').setLabel('Ana Səhifə').setStyle(ButtonStyle.Secondary).setEmoji('🏠')
       );
 
-      const msg = await message.reply({ 
-        embeds: [anaEmbed], 
-        components: [new ActionRowBuilder().addComponents(menu), anaRow] 
-      });
+      const msg = await message.reply({ embeds: [anaEmbed], components: [new ActionRowBuilder().addComponents(menu), anaRow] });
 
-      const collector = msg.createMessageComponentCollector({
-        filter: i => i.user.id === message.author.id,
-        time: 15 * 60 * 1000
-      });
+      const collector = msg.createMessageComponentCollector({ filter: i => i.user.id === message.author.id, time: 15 * 60 * 1000 });
 
       collector.on('collect', async (i) => {
         if (i.customId === 'help_home') {
-          return i.update({ 
-            embeds: [anaEmbed], 
-            components: [new ActionRowBuilder().addComponents(menu), anaRow] 
-          });
+          return i.update({ embeds: [anaEmbed], components: [new ActionRowBuilder().addComponents(menu), anaRow] });
         }
-
         if (i.customId === 'help_menu') {
-          const secilen = i.values[0];
-          const kat = kategoriler[secilen];
-
+          const kat = kategoriler[i.values[0]];
           const embed = new EmbedBuilder()
             .setTitle(`${kat.emoji} ${kat.label} Komandaları`)
             .setDescription(kat.commands.map(c => `**${c.cmd}**\n> ${c.desc}`).join('\n\n'))
             .setColor(kat.color)
             .setFooter({ text: 'ASTROL Bot • Ana səhifəyə dönmək üçün 🏠 düyməsinə basın' });
-
           const geriRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder().setCustomId('help_home').setLabel('Ana Səhifə').setStyle(ButtonStyle.Secondary).setEmoji('🏠')
           );
-
-          await i.update({ 
-            embeds: [embed], 
-            components: [new ActionRowBuilder().addComponents(menu), geriRow] 
-          });
+          await i.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(menu), geriRow] });
         }
       });
 
-      collector.on('end', () => {
-        msg.edit({ components: [] }).catch(() => {});
-      });
+      collector.on('end', () => msg.edit({ components: [] }).catch(() => {}));
     }
   }
 };
