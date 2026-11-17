@@ -2,16 +2,15 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = process.env.AI_MODEL || 'openrouter/free';
+const GEMINI_KEY = process.env.GEMINI_API_KEY;
+// Google-un pulsuz təbəqəsi üçün sabit mövcud olan Flash modelindən istifadə edirik
+const MODEL = process.env.AI_MODEL || 'gemini-2.5-flash';
 
-// ============ KOD OXUYUCU ============
-// AI botun öz fayllarını oxuya bilsin deyə
+// ============ KOD OXUYUCU (dəyişməyib) ============
 function readBotFile(relPath) {
   try {
     const root = path.join(__dirname, '..');
     const full = path.join(root, relPath);
-    // Təhlükəsizlik: root-dan kənara çıxmasın
     if (!full.startsWith(root)) return '❌ Yol xətası (root xaricində).';
     if (!fs.existsSync(full)) return `❌ Fayl tapılmadı: ${relPath}`;
     const stat = fs.statSync(full);
@@ -52,7 +51,6 @@ function listBotFiles(dir = '.') {
 }
 
 // ============ TOOL CALLING (AI komandaları icra etsin) ============
-// AI-ın çağıra biləcəyi alətlər
 const TOOLS = [
   {
     type: 'function',
@@ -120,10 +118,10 @@ const TOOLS = [
   }
 ];
 
-// ============ OPENROUTER ÇAĞIRIŞI ============
-function openrouterRequest(messages, tools = null) {
+// ============ GOOGLE AI STUDIO (OpenAI Compatibility) ÇAĞIRIŞI ============
+function geminiRequest(messages, tools = null) {
   return new Promise((resolve, reject) => {
-    if (!OPENROUTER_KEY) return reject(new Error('OPENROUTER_API_KEY yoxdur!'));
+    if (!GEMINI_KEY) return reject(new Error('GEMINI_API_KEY yoxdur!'));
 
     const body = {
       model: MODEL,
@@ -137,14 +135,12 @@ function openrouterRequest(messages, tools = null) {
     const data = JSON.stringify(body);
 
     const req = https.request({
-      hostname: 'openrouter.ai',
-      path: '/api/v1/chat/completions',
+      hostname: 'generativelanguage.googleapis.com',
+      path: '/v1beta/openai/chat/completions', // Google-un OpenAI uyğunluq endpoint-i
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://github.com/eagle18-s/probot',
-        'X-Title': 'ASTROL Bot'
+        'Authorization': `Bearer ${GEMINI_KEY}`, // OpenAI formatında Authorization
+        'Content-Type': 'application/json'
       }
     }, (res) => {
       let buf = '';
@@ -165,7 +161,7 @@ function openrouterRequest(messages, tools = null) {
   });
 }
 
-// ============ TOOL EXECUTOR ============
+// ============ TOOL EXECUTOR (dəyişməyib) ============
 async function executeTool(toolCall, context) {
   const name = toolCall.function.name;
   const args = JSON.parse(toolCall.function.arguments || '{}');
@@ -206,19 +202,15 @@ async function executeTool(toolCall, context) {
       }
 
       case 'execute_bot_command': {
-        // Təhlükəsizlik: yalnız adminlər
         if (!context.member.permissions.has('Administrator')) {
           return '❌ AI vasitəsilə komanda icra etmək üçün Administrator yetkisi lazımdır.';
         }
         const cmd = args.command;
         if (!cmd || !cmd.startsWith('.')) return '❌ Komanda "." ilə başlamalıdır.';
         
-        // Mesajı simulyasiya etmək əvəzinə, birbaşa komanda icra edirik
-        // Bot-un messageCreate hadisəsinə ötürürük
         try {
           context.message.content = cmd;
           context.message.channel.send(`🤖 **AI komanda icra edir:** \`${cmd}\``).catch(() => {});
-          // messageCreate-i tetikle
           context.client.emit('messageCreate', context.message);
           return `✅ Komanda göndərildi: ${cmd}`;
         } catch (e) {
@@ -234,7 +226,7 @@ async function executeTool(toolCall, context) {
   }
 }
 
-// ============ ƏSAS FUNKSİYA ============
+// ============ ƏSAS FUNKSİYA (dəyişməyib) ============
 async function askAI(userMessage, context, history = []) {
   const systemPrompt = `Sən ASTROL adlı Discord botusan. Azərbaycan dilində cavab ver. 
 Sənin haqqında:
@@ -250,15 +242,14 @@ Server: ${context.guild?.name || 'DM'}`;
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history.slice(-10), // son 10 mesaj
+    ...history.slice(-10),
     { role: 'user', content: userMessage }
   ];
 
-  let response = await openrouterRequest(messages, TOOLS);
+  let response = await geminiRequest(messages, TOOLS);
   let choice = response.choices?.[0]?.message;
   if (!choice) throw new Error('AI cavab vermədi.');
 
-  // Tool calling loop (maks 3 dəfə)
   let iterations = 0;
   while (choice.tool_calls && choice.tool_calls.length && iterations < 3) {
     iterations++;
@@ -271,7 +262,7 @@ Server: ${context.guild?.name || 'DM'}`;
         content: String(result).slice(0, 4000)
       });
     }
-    response = await openrouterRequest(messages, TOOLS);
+    response = await geminiRequest(messages, TOOLS);
     choice = response.choices?.[0]?.message;
     if (!choice) throw new Error('AI cavab vermədi (tool loop).');
   }
