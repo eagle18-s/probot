@@ -3,10 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
-// Google-un pulsuz təbəqəsi üçün sabit mövcud olan Flash modelindən istifadə edirik
 const MODEL = process.env.AI_MODEL || 'gemini-2.5-flash';
 
-// ============ KOD OXUYUCU (dəyişməyib) ============
+// ============ KOD OXUYUCU ============
 function readBotFile(relPath) {
   try {
     const root = path.join(__dirname, '..');
@@ -50,7 +49,7 @@ function listBotFiles(dir = '.') {
   }
 }
 
-// ============ TOOL CALLING (AI komandaları icra etsin) ============
+// ============ TOOL CALLING ============
 const TOOLS = [
   {
     type: 'function',
@@ -118,7 +117,7 @@ const TOOLS = [
   }
 ];
 
-// ============ GOOGLE AI STUDIO (OpenAI Compatibility) ÇAĞIRIŞI ============
+// ============ GOOGLE AI STUDIO ÇAĞIRIŞI ============
 function geminiRequest(messages, tools = null) {
   return new Promise((resolve, reject) => {
     if (!GEMINI_KEY) return reject(new Error('GEMINI_API_KEY yoxdur!'));
@@ -136,10 +135,10 @@ function geminiRequest(messages, tools = null) {
 
     const req = https.request({
       hostname: 'generativelanguage.googleapis.com',
-      path: '/v1beta/openai/chat/completions', // Google-un OpenAI uyğunluq endpoint-i
+      path: '/v1beta/openai/chat/completions',
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GEMINI_KEY}`, // OpenAI formatında Authorization
+        'Authorization': `Bearer ${GEMINI_KEY}`,
         'Content-Type': 'application/json'
       }
     }, (res) => {
@@ -161,7 +160,7 @@ function geminiRequest(messages, tools = null) {
   });
 }
 
-// ============ TOOL EXECUTOR (dəyişməyib) ============
+// ============ TOOL EXECUTOR ============
 async function executeTool(toolCall, context) {
   const name = toolCall.function.name;
   const args = JSON.parse(toolCall.function.arguments || '{}');
@@ -226,7 +225,7 @@ async function executeTool(toolCall, context) {
   }
 }
 
-// ============ ƏSAS FUNKSİYA (dəyişməyib) ============
+// ============ ƏSAS FUNKSİYA ============
 async function askAI(userMessage, context, history = []) {
   const systemPrompt = `Sən ASTROL adlı Discord botusan. Azərbaycan dilində cavab ver. 
 Sənin haqqında:
@@ -247,9 +246,18 @@ Server: ${context.guild?.name || 'DM'}`;
   ];
 
   let response = await geminiRequest(messages, TOOLS);
-  let choice = response.choices?.[0]?.message;
-  if (!choice) throw new Error('AI cavab vermədi.');
+  
+  // 🔴 BOŞ CAVAB QORUMASI (Content Filter üçün)
+  if (!response.choices || response.choices.length === 0) {
+    throw new Error('AI boş cavab qaytardı (ehtimal ki məzmun filtrinə düşdü).');
+  }
+  
+  let choice = response.choices[0].message;
+  if (!choice) {
+    throw new Error('AI mesajı boşdur (məzmun filtri ola bilər).');
+  }
 
+  // Tool calling loop (maks 3 dəfə)
   let iterations = 0;
   while (choice.tool_calls && choice.tool_calls.length && iterations < 3) {
     iterations++;
@@ -263,8 +271,15 @@ Server: ${context.guild?.name || 'DM'}`;
       });
     }
     response = await geminiRequest(messages, TOOLS);
-    choice = response.choices?.[0]?.message;
-    if (!choice) throw new Error('AI cavab vermədi (tool loop).');
+    
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('AI boş cavab qaytardı (tool loop zamanı).');
+    }
+    
+    choice = response.choices[0].message;
+    if (!choice) {
+      throw new Error('AI cavabı boşdur (tool loop zamanı).');
+    }
   }
 
   return choice.content || '(AI cavab verə bilmədi)';
