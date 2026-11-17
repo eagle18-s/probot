@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
-const MODEL = process.env.AI_MODEL || 'google/gemini-2.0-flash-exp:free';
+const MODEL = process.env.AI_MODEL || 'openrouter/free';
 
 // ============ KOD OXUYUCU ============
 // AI botun öz fayllarını oxuya bilsin deyə
