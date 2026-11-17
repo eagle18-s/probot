@@ -1,7 +1,7 @@
 const { PermissionFlagsBits, EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const storage = require('../utils/storage');
 const { efendimLog } = require('../utils/logger');
-const { askAI } = require('../utils/ai');
+
 
 const spamMap = new Map();
 const aiHistory = new Map(); // kanal başına söhbət tarixçəsi
