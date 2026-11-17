@@ -3,13 +3,19 @@ const storage = require('../utils/storage');
 
 module.exports = {
   name: 'logsetup',
-  aliases: ['welcomesetup', 'istatistik', 'sunucubilgi', 'avatar', 'snipe', 'küfür-ekle', 'küfür-sil', 'linkistisna', 'özelodasetup', 'yardim', 'help', 'kanal-yarat', 'kanal-sil', 'mesaj-gönder', 'embed'],
+  aliases: [
+    'welcomesetup', 'istatistik', 'sunucubilgi', 'avatar', 'snipe', 
+    'küfür-ekle', 'küfür-sil', 'linkistisna', 'özelodasetup', 'yardim', 'help', 
+    'kanal-yarat', 'kanal-sil', 'mesaj-gönder', 'embed', 'kilit', 'kilitaç',
+    'ping', 'botbilgi', 'random', 'zar', 'yazı-tura'
+  ],
   async execute(message, args, client, ctx) {
     const cmd = message.content.slice(client.PREFIX.length).trim().split(/ +/)[0].toLowerCase();
     const config = ctx.config;
     if (!config[message.guild.id]) config[message.guild.id] = {};
     const gcfg = config[message.guild.id];
 
+    // ===== LOGSETUP =====
     if (cmd === 'logsetup') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin yetkisi.');
       const ch = message.mentions.channels.first();
@@ -18,6 +24,7 @@ module.exports = {
       message.reply(`✅ Log kanalı: ${ch}`);
     }
 
+    // ===== WELCOMESETUP =====
     if (cmd === 'welcomesetup') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin yetkisi.');
       const ch = message.mentions.channels.first();
@@ -26,6 +33,7 @@ module.exports = {
       message.reply(`✅ Welcome/Leave kanalı: ${ch}`);
     }
 
+    // ===== İSTATİSTİK =====
     if (cmd === 'istatistik') {
       await message.guild.members.fetch().catch(() => {});
       const online = message.guild.members.cache.filter(m => m.presence?.status === 'online').size;
@@ -48,6 +56,7 @@ module.exports = {
       message.reply({ embeds: [embed] });
     }
 
+    // ===== SUNUCUBİLGİ =====
     if (cmd === 'sunucubilgi') {
       const owner = await message.guild.fetchOwner();
       const embed = new EmbedBuilder()
@@ -63,11 +72,13 @@ module.exports = {
       message.reply({ embeds: [embed] });
     }
 
+    // ===== AVATAR =====
     if (cmd === 'avatar') {
       const u = message.mentions.users.first() || message.author;
       message.reply({ embeds: [new EmbedBuilder().setTitle(`${u.tag}`).setImage(u.displayAvatarURL({ size: 1024, dynamic: true })).setColor(0x5865F2)] });
     }
 
+    // ===== SNIPE =====
     if (cmd === 'snipe') {
       const snipe = storage.load('snipe', {});
       const list = snipe[message.channel.id];
@@ -81,6 +92,7 @@ module.exports = {
       message.reply({ embeds: [embed] });
     }
 
+    // ===== KÜFÜR =====
     if (cmd === 'küfür-ekle') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const w = args.join(' ').toLowerCase().trim();
@@ -100,6 +112,7 @@ module.exports = {
       message.reply(`✅ \`${w}\` silindi.`);
     }
 
+    // ===== LINK İSTİSNA =====
     if (cmd === 'linkistisna') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first() || message.channel;
@@ -113,6 +126,7 @@ module.exports = {
       message.reply(`✅ ${ch} istisna edildi.`);
     }
 
+    // ===== ÖZEL ODA =====
     if (cmd === 'özelodasetup') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const cat = await message.guild.channels.create({ name: 'ÖZEL ODALAR', type: ChannelType.GuildCategory });
@@ -122,6 +136,7 @@ module.exports = {
       message.reply('✅ Özel oda sistemi quruldu!');
     }
 
+    // ===== KANAL YARAT =====
     if (cmd === 'kanal-yarat') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const name = args[0];
@@ -139,6 +154,7 @@ module.exports = {
       message.reply(`✅ Kanal: ${ch} (${isLocked ? 'Kilitli' : 'Açıq'})`);
     }
 
+    // ===== KANAL SİL =====
     if (cmd === 'kanal-sil') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first();
@@ -148,6 +164,28 @@ module.exports = {
       message.reply(`✅ **${n}** silindi.`);
     }
 
+    // ===== KİLİT =====
+    if (cmd === 'kilit') {
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Yönetici yetkisi gerekli.');
+      const ch = message.mentions.channels.first() || message.channel;
+      try {
+        await ch.permissionOverwrites.edit(message.guild.id, { ViewChannel: false });
+        await ch.permissionOverwrites.edit(client.user.id, { ViewChannel: true, SendMessages: true, ManageChannels: true });
+        await message.reply(`🔒 ${ch} kanalı kilitlendi.`);
+      } catch { message.reply('❌ Kanal kilitlenirken hata oluştu.'); }
+    }
+
+    // ===== KİLİT AÇ =====
+    if (cmd === 'kilitaç') {
+      if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Yönetici yetkisi gerekli.');
+      const ch = message.mentions.channels.first() || message.channel;
+      try {
+        await ch.permissionOverwrites.edit(message.guild.id, { ViewChannel: true });
+        await message.reply(`🔓 ${ch} kanalının kilidi açıldı.`);
+      } catch { message.reply('❌ Kanal açılırken hata oluştu.'); }
+    }
+
+    // ===== MESAJ GÖNDƏR =====
     if (cmd === 'mesaj-gönder') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const ch = message.mentions.channels.first();
@@ -158,6 +196,7 @@ module.exports = {
       message.reply(`✅ Göndərildi: ${ch}`);
     }
 
+    // ===== EMBED =====
     if (cmd === 'embed') {
       if (!message.member.permissions.has(PermissionFlagsBits.Administrator)) return message.reply('❌ Admin.');
       const raw = args.join(' ');
@@ -171,7 +210,60 @@ module.exports = {
       await message.channel.send({ embeds: [emb] });
     }
 
-    // ===== YARDIM (Butonlu və Menyulu - XP SİLİNDİ, AI ƏLAVƏ OLUNDU) =====
+    // ===== PING (YENİ) =====
+    if (cmd === 'ping') {
+      const ping = client.ws.ping;
+      const embed = new EmbedBuilder()
+        .setTitle('🏓 Pong!')
+        .setDescription(`Botun gecikməsi: **${ping}ms**`)
+        .setColor(ping < 100 ? 0x00ff00 : ping < 200 ? 0xffaa00 : 0xff0000);
+      message.reply({ embeds: [embed] });
+    }
+
+    // ===== BOTBİLGİ (YENİ) =====
+    if (cmd === 'botbilgi') {
+      const uptime = process.uptime();
+      const days = Math.floor(uptime / 86400);
+      const hours = Math.floor((uptime % 86400) / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const embed = new EmbedBuilder()
+        .setTitle(`🤖 ${client.user.username} Məlumatları`)
+        .setThumbnail(client.user.displayAvatarURL())
+        .addFields(
+          { name: '⏱️ İşləmə müddəti', value: `${days}g ${hours}s ${minutes}d`, inline: true },
+          { name: '📡 Ping', value: `${client.ws.ping}ms`, inline: true },
+          { name: '📚 Kitabxana', value: 'discord.js v14', inline: true },
+          { name: '💾 Yaddaş', value: `${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2)} MB`, inline: true },
+          { name: '🌐 Server sayı', value: `${client.guilds.cache.size}`, inline: true },
+          { name: '👥 İstifadəçi sayı', value: `${client.users.cache.size}`, inline: true }
+        ).setColor(0x5865F2);
+      message.reply({ embeds: [embed] });
+    }
+
+    // ===== RANDOM (YENİ) =====
+    if (cmd === 'random') {
+      const min = parseInt(args[0], 10) || 1;
+      const max = parseInt(args[1], 10) || 100;
+      if (min >= max) return message.reply('❌ Birinci rəqəm ikincidən kiçik olmalıdır.');
+      const result = Math.floor(Math.random() * (max - min + 1)) + min;
+      message.reply(`🎲 **${min}** və **${max}** arasındakı təsadüfi ədəd: **${result}**`);
+    }
+
+    // ===== ZAR (YENİ) =====
+    if (cmd === 'zar') {
+      const faces = parseInt(args[0], 10) || 6;
+      if (faces < 2) return message.reply('❌ Zər ən azı 2 üzlü olmalıdır.');
+      const result = Math.floor(Math.random() * faces) + 1;
+      message.reply(`🎲 **${faces}** üzlü zər atıldı: **${result}**`);
+    }
+
+    // ===== YAZI-TURA (YENİ) =====
+    if (cmd === 'yazı-tura') {
+      const result = Math.random() < 0.5 ? '🪙 **Yazı**' : '🪙 **Tura**';
+      message.reply(result);
+    }
+
+    // ===== YARDIM (Butonlu və Menyulu - TAM YENİLƏNMİŞ) =====
     if (cmd === 'yardim' || cmd === 'help') {
       const kategoriler = {
         moderasiya: {
@@ -186,7 +278,9 @@ module.exports = {
             { cmd: '.warnings @üzvə', desc: 'Uyarıları göstərir' },
             { cmd: '.clearwarns @üzvə', desc: 'Uyarıları silir' },
             { cmd: '.sil <sayı>', desc: 'Mesaj silir (1-100)' },
-            { cmd: '.yavaş-mod <saniyə>', desc: 'Yavaş mod açır' }
+            { cmd: '.yavaş-mod <saniyə>', desc: 'Yavaş mod açır' },
+            { cmd: '.case <ID>', desc: 'Case (hadisə) məlumatına baxır' },
+            { cmd: '.cases', desc: 'Son 10 case-i göstərir' }
           ]
         },
         jail: {
@@ -195,30 +289,48 @@ module.exports = {
             { cmd: '.jail @üzvə', desc: 'Jail-ə atır' },
             { cmd: '.unjail @üzvə', desc: 'Jail-dən çıxarır' },
             { cmd: '.jailrol <ID>', desc: 'Jail rolunu ayarlayır' },
+            { cmd: '.jailytrol @rol', desc: 'Jail yetkili rolunu ayarlayır' },
             { cmd: '.üyerol @rol', desc: 'Üzvə rolunu ayarlayır' },
             { cmd: '.rolver @üzvə @rol', desc: 'Rol verir' },
             { cmd: '.rolal @üzvə @rol', desc: 'Rol alır' }
           ]
         },
-        
+        kanal: {
+          label: 'Kanal İdarəsi', emoji: '📁', color: 0x3498db, desc: 'Kanal yaratma və kilidləmə',
+          commands: [
+            { cmd: '.kilit [#kanal]', desc: 'Kanalı @everyone üçün kilidləyir' },
+            { cmd: '.kilitaç [#kanal]', desc: 'Kanalın kilidini açır' },
+            { cmd: '.kanal-yarat <ad> <açıq/kilitli>', desc: 'Yeni mətn kanalı yaradır' },
+            { cmd: '.kanal-sil #kanal', desc: 'Kanalı silir' },
+            { cmd: '.mesaj-gönder #kanal <mətn>', desc: 'Kanala mesaj göndərir' },
+            { cmd: '.özelodasetup', desc: 'Özel səs otaqları qurur' }
+          ]
+        },
         sistem: {
-          label: 'Sistem', emoji: '⚙️', color: 0x00ff00, desc: 'Log, kanal, embed',
+          label: 'Sistem', emoji: '⚙️', color: 0x00ff00, desc: 'Log, embed, statistika',
           commands: [
             { cmd: '.logsetup #kanal', desc: 'Log kanalı' },
             { cmd: '.welcomesetup #kanal', desc: 'Qarşılama kanalı' },
-            { cmd: '.küfür-ekle <söz>', desc: 'Qadağan söz' },
-            { cmd: '.linkistisna #kanal', desc: 'Link istisnası' },
-            { cmd: '.özelodasetup', desc: 'Özel otaqlar' },
-            { cmd: '.kanal-yarat <ad>', desc: 'Kanal yarat' },
-            { cmd: '.embed Başlıq | Mətn', desc: 'Embed göndər' }
+            { cmd: '.embed Başlıq | Mətn', desc: 'Embed göndərir' },
+            { cmd: '.küfür-ekle/sil <söz>', desc: 'Qadağan sözləri idarə edir' },
+            { cmd: '.linkistisna #kanal', desc: 'Link qadağasından azad edir' },
+            { cmd: '.istatistik', desc: 'Server statistikası' },
+            { cmd: '.sunucubilgi', desc: 'Server haqqında məlumat' },
+            { cmd: '.avatar [@üzvə]', desc: 'Avatarı göstərir' },
+            { cmd: '.snipe', desc: 'Son silinən mesajı göstərir' }
           ]
         },
         eylence: {
-          label: 'Əyləncə', emoji: '🎉', color: 0xffaa00, desc: 'Çekiliş, anket, ticket',
+          label: 'Əyləncə & Kommunal', emoji: '🎉', color: 0xffaa00, desc: 'Çekiliş, anket, ping və s.',
           commands: [
             { cmd: '.çekiliş <süre> <say> <ödül>', desc: 'Çekiliş başladır' },
             { cmd: '.anket Sual | V1 | V2', desc: 'Anket yaradır' },
-            { cmd: '.ticket <səbəb>', desc: 'Dəstək taleyi açır' }
+            { cmd: '.ticket <səbəb>', desc: 'Dəstək taleyi açır' },
+            { cmd: '.ping', desc: 'Botun gecikməsini ölçür' },
+            { cmd: '.botbilgi', desc: 'Bot haqqında texniki məlumat' },
+            { cmd: '.random <min> <max>', desc: 'Təsadüfi ədəd seçir' },
+            { cmd: '.zar [üz]', desc: 'Zər atır (default 6)' },
+            { cmd: '.yazı-tura', desc: 'Yazı və ya tura atır' }
           ]
         },
         davet: {
@@ -232,7 +344,7 @@ module.exports = {
 
       const anaEmbed = new EmbedBuilder()
         .setTitle('📚 ASTROL Kömək Mərkəzi')
-        .setDescription('Aşağıdakı menyudan kateqoriya seçərək komandalara baxa bilərsiniz.\n\n**Kateqoriyalar:**\n🛡️ Moderasiya • 🔒 Jail & Rol • 🤖 AI & Söhbət\n⚙️ Sistem • 🎉 Əyləncə • 📨 Dəvətlər')
+        .setDescription('Aşağıdakı menyudan kateqoriya seçərək komandalara baxa bilərsiniz.\n\n**Kateqoriyalar:**\n🛡️ Moderasiya • 🔒 Jail & Rol • 📁 Kanal İdarəsi\n⚙️ Sistem • 🎉 Əyləncə • 📨 Dəvətlər')
         .setColor(0x5865F2)
         .setFooter({ text: 'ASTROL Bot • Butonlara basaraq keçid edin' })
         .setThumbnail(client.user.displayAvatarURL());
@@ -271,4 +383,4 @@ module.exports = {
       collector.on('end', () => msg.edit({ components: [] }).catch(() => {}));
     }
   }
-};
+}; 
