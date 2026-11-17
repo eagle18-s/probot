@@ -128,7 +128,6 @@ module.exports = {
           const selected = interaction.values;
           const allRoles = panel.options.map(o => o.roleId);
           const member = interaction.member;
-          // Seçilməyənləri çıxar
           for (const rId of allRoles) {
             if (!selected.includes(rId) && member.roles.cache.has(rId)) {
               await member.roles.remove(rId).catch(() => {});
