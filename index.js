@@ -48,28 +48,54 @@ for (const file of eventFiles) {
   console.log(`✅ Event yüklendi: ${ev.name}`);
 }
 
-// ==================== EXPRESS ====================
+// ==================== EXPRESS WEB SERVER ====================
 const app = express();
 app.get('/', (req, res) => res.send(`ASTROL Bot aktif | ${new Date().toLocaleString('tr-TR')}`));
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🌐 Web server ${PORT}`));
 
-// ==================== KEEP-ALIVE + JSON CHECK (hər 2 dəq) ====================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🌐 Web server ${PORT} portunda işləyir`));
+
+// ==================== KEEP-ALIVE VƏ DM SİSTEMİ ====================
 setInterval(async () => {
+  // Render xarici URL-i (Environment-də RENDER_EXTERNAL_URL olmalıdır)
   const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+  
   try {
     const res = await fetch(url);
-    console.log(`[keep-alive] ${res.status} — ${new Date().toISOString()}`);
-  } catch (e) {
-    console.error('[keep-alive] xəta:', e.message);
+    
+    if (res.ok) {
+      console.log(`[Keep-Alive] ✅ Sayt aktivdir (Status: ${res.status})`);
+      
+      // Adminə DM at
+      try {
+        const admin = await client.users.fetch(PING_ADMIN_ID);
+        const now = Math.floor(Date.now() / 1000);
+        
+        await admin.send(
+          `✅ **ASTROL Bot Keep-Alive**\n\n` +
+          `🟢 **Status:** Sayt aktivdir (HTTP ${res.status})\n` +
+          `🌐 **URL:** ${url}\n` +
+          `⏱️ **Uptime:** ${Math.floor(process.uptime() / 60)} dəqiqə\n` +
+          `🕒 **Zaman:** <t:${now}:F>`
+        );
+      } catch (dmError) {
+        console.error('[Keep-Alive] ❌ Adminə DM göndərilmədi (DM bağlı ola bilər):', dmError.message);
+      }
+    } else {
+      console.log(`[Keep-Alive] ⚠️ Sayt cavab verdi amma status uğursuzdur: ${res.status}`);
+    }
+  } catch (error) {
+    console.error('[Keep-Alive] ❌ HTTP sorğu xətası:', error.message);
   }
+
+  // JSON yaddaş yoxlaması (əvvəlki koddan qalıb)
   try {
     await checkJsonHealth(client);
   } catch (e) {
-    console.error('[json-check] xəta:', e.message);
+    console.error('[JSON Check] ❌ Xəta:', e.message);
   }
-}, 2 * 60 * 1000);
+}, 2 * 60 * 1000); // 2 dəqiqə = 120,000 millisaniyə
 
 // ==================== QLOBAL XƏTA TUTMA ====================
 process.on('unhandledRejection', (err) => console.error('unhandledRejection:', err));
