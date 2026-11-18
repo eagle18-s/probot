@@ -6,7 +6,7 @@ module.exports = {
   once: true,
   execute(client) {
     console.log(`✅ ${client.user.tag} aktif!`);
-    client.user.setActivity('📞.yardim', { type: ActivityType.Watching });
+    client.user.setActivity('📞.yardim|https://probot-e10v.onrender.com/', { type: ActivityType.Watching });
 
     // Yaddaşdakı bütün JSON-ları yoxla
     const keys = storage.allKeys();
