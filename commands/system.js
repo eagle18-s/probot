@@ -332,7 +332,9 @@ module.exports = {
             { cmd: '.zar [üz]', desc: 'Zər atır (default 6)' },
             { cmd: '.yazı-tura', desc: 'Yazı və ya tura atır' },
             { cmd: '.ship [@üzvə1] [@üzvə2]', desc: 'Saqqızın oğurlanıb? Səni Dəcəl 😁' },
-            { cmd: '.ship', desc: 'Gəl sənində başını bağlayaq .' }
+            { cmd: '.ship', desc: 'Gəl sənində başını bağlayaq .' },
+            { cmd: '.gizli <mesaj>', desc: 'Mesajı DM-dən göndərir' },
+            { cmd: '.sual-tap', desc: '1-100 arası ədəd tapma oyunu' }
           ]
         },
         davet: {
