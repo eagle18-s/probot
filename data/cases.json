@@ -1,6 +1,6 @@
 {
   "1569409410206277805": {
-    "nextId": 4,
+    "nextId": 5,
     "list": [
       {
         "id": 1,
@@ -25,6 +25,15 @@
         "modId": "1561721639518081105",
         "reason": "Ban qaldırıldı",
         "date": 1794913325615
+      },
+      {
+        "id": 4,
+        "type": "MUTE",
+        "targetId": "1503448554532769893",
+        "modId": "1561721639518081105",
+        "reason": "Sebep belirtilmedi",
+        "date": 1794988983913,
+        "duration": "1h"
       }
     ]
   }
