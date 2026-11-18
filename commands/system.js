@@ -330,9 +330,9 @@ module.exports = {
             { cmd: '.botbilgi', desc: 'Bot haqqında texniki məlumat' },
             { cmd: '.random <min> <max>', desc: 'Təsadüfi ədəd seçir' },
             { cmd: '.zar [üz]', desc: 'Zər atır (default 6)' },
-            { cmd: '.yazı-tura', desc: 'Yazı və ya tura atır' }
+            { cmd: '.yazı-tura', desc: 'Yazı və ya tura atır' },
             { cmd: '.ship [@üzvə1] [@üzvə2]', desc: 'İki nəfərin sevgi faizini ölçür' },
-            { cmd: '.ship', desc: 'Heç kim yazılmasa random biri ilə ship edir' },
+            { cmd: '.ship', desc: 'Heç kim yazılmasa random biri ilə ship edir' }
           ]
         },
         davet: {
