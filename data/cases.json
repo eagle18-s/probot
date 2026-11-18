@@ -1,6 +1,6 @@
 {
   "1569409410206277805": {
-    "nextId": 5,
+    "nextId": 6,
     "list": [
       {
         "id": 1,
@@ -34,6 +34,14 @@
         "reason": "Sebep belirtilmedi",
         "date": 1794988983913,
         "duration": "1h"
+      },
+      {
+        "id": 5,
+        "type": "UNMUTE",
+        "targetId": "1503448554532769893",
+        "modId": "1561721639518081105",
+        "reason": "Timeout qaldırıldı",
+        "date": 1794988992245
       }
     ]
   }
