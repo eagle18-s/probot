@@ -310,7 +310,7 @@ app.get('/', (req, res) => {
             <a href="https://discord.com/oauth2/authorize?client_id=${client.user ? client.user.id : 'SENIN_BOT_ID'} &permissions=8&scope=bot%20applications.commands" target="_blank" class="btn btn-primary">
                 🚀 Botu Dəvət Et
             </a>
-            <a href="https://discord.gg/SENIN_SERVER_LINKIN" target="_blank" class="btn btn-secondary">
+            <a href="https://discord.gg/7EfW6kmbnk" target="_blank" class="btn btn-secondary">
                 💬 Dəstək Serveri
             </a>
         </div>
