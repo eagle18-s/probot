@@ -62,7 +62,15 @@ module.exports = {
       await message.channel.send(`${message.author} spam yaptığı için 30s timeout yedi.`).catch(() => {});
       spamMap.set(skey, []);
     }
-
+    
+     // ===== Sual-Tap Oyunu (Sadəcə rəqəm yazılanda) =====
+const sualTapCmd = client.commands.get('sual-tap');
+if (sualTapCmd && /^\d+$/.test(message.content.trim())) {
+  const args = [message.content.trim()];
+  // Komandanı icra et (sual-tap.js faylına yönləndir)
+  return sualTapCmd.execute(message, args, client, { config, gcfg });
+}
+    
     // ===== Komanda =====
     if (!message.content.startsWith(client.PREFIX)) return;
     const args = message.content.slice(client.PREFIX.length).trim().split(/ +/);
