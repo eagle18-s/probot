@@ -8,14 +8,16 @@ module.exports = {
   aliases: ['sualtap', 'tap', 'guess'],
   async execute(message, args, client, ctx) {
     const channelId = message.channel.id;
-
-    // Əgər args[0] rəqəmdirsə, istifadəçi təxmin edir
     const guess = parseInt(args[0], 10);
+    const isSadeceRəqəm = /^\d+$/.test(message.content.trim()); // Yalnız rəqəmdirsə
 
-    if (!isNaN(guess)) {
+    // Əgər rəqəm yazılıbsa (və ya komanda ilə rəqəm gəlibsə)
+    if (!isNaN(guess) && (isSadeceRəqəm || message.content.startsWith('.sual-tap') || message.content.startsWith('.sualtap'))) {
       const oyun = aktifOyunlar.get(channelId);
       
+      // Əgər oyun yoxdursa və sadəcə rəqəm yazılıbsa, heç nə etmə (botu susdur)
       if (!oyun) {
+        if (isSadeceRəqəm) return; // Sadəcə rəqəm yazılıbsa sus
         return message.reply('❌ Bu kanalda aktiv oyun yoxdur. Başlamaq üçün `.sual-tap` yazın.');
       }
       
@@ -27,7 +29,6 @@ module.exports = {
       }
 
       if (guess === oyun.ədəd) {
-        // Qalibiyyət!
         const embed = new EmbedBuilder()
           .setTitle('🎉 TƏBİKLƏR!')
           .setDescription(`**${message.author.tag}** ədədi tapdı!\n\n**Tutulan Ədəd:** ${oyun.ədəd}\n**Cəhd sayı:** ${oyun.cəhdlər}\n**Başladan:** ${oyun.başladan}`)
@@ -48,10 +49,10 @@ module.exports = {
       }
     }
 
-    // Əgər args yoxdursa, yeni oyun başlat
+    // Əgər args yoxdursa (yəni sadəcə `.sual-tap` yazılıbsa), yeni oyun başlat
     if (aktifOyunlar.has(channelId)) {
       const oyun = aktifOyunlar.get(channelId);
-      return message.reply(`⚠️ Bu kanalda artıq aktiv oyun var! (Başladan: ${oyun.başladan}). Təxmin etmək üçün \`.sual-tap <rəqəm>\` yazın.`);
+      return message.reply(`⚠️ Bu kanalda artıq aktiv oyun var! (Başladan: ${oyun.başladan}). Təxmin etmək üçün sadəcə rəqəm yazın.`);
     }
 
     // Yeni oyun yarat (1-100 arası təsadüfi ədəd)
@@ -64,7 +65,7 @@ module.exports = {
       başlamaVaxtı: Date.now()
     });
 
-    // 5 dəqiqə sonra oyunu avtomatik sil (yaddaş sızması qarşısı)
+    // 5 dəqiqə sonra oyunu avtomatik sil
     setTimeout(() => {
       if (aktifOyunlar.has(channelId)) {
         const oyun = aktifOyunlar.get(channelId);
@@ -77,7 +78,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setTitle('🎯 Sual-Tap Oyunu Başladı!')
-      .setDescription(`**${message.author.tag}** tərəfindən bir ədəd tutuldu (1 - 100 arası).\n\nTəxmin etmək üçün: \`.sual-tap <rəqəm>\`\nMəsələn: \`.sual-tap 50\``)
+      .setDescription(`**${message.author.tag}** tərəfindən bir ədəd tutuldu (1 - 100 arası).\n\nTəxmin etmək üçün sadəcə **rəqəm yazın** (məsələn: \`50\`)`)
       .setColor(0x5865F2)
       .setFooter({ text: 'Oyun 5 dəqiqə davam edəcək' })
       .setTimestamp();
