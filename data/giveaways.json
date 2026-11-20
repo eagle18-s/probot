@@ -9,5 +9,14 @@
     ],
     "endAt": 1795112418981,
     "ended": true
+  },
+  "1573416106314436680": {
+    "id": "1573416106314436680",
+    "channelId": "1571749230568013897",
+    "prize": "Bot",
+    "winnersCount": 1,
+    "participants": [],
+    "endAt": 1795202152219,
+    "ended": false
   }
 }
