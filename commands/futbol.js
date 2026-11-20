@@ -103,7 +103,6 @@ async function getMatchEvents(leagueSlug, eventId) {
     const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSlug}/summary?event=${eventId}`);
     const data = await res.json();
     
-    // ESPN müxtəlif strukturlar qaytara bilər: commentary, keyEvents, plays
     const rawEvents = data.commentary || data.keyEvents || data.plays || [];
     
     if (!rawEvents.length) return [];
@@ -112,8 +111,10 @@ async function getMatchEvents(leagueSlug, eventId) {
       const play = c.play || c;
       if (!play) return null;
       
-      // Hadisə mətnini və tipini təhlükəsiz çıxarırıq
-      const text = play.text || play.shortText || play.description || 'Hadisə mətni yoxdur';
+      // Mətni qısaldırıq (maksimum 150 simvol)
+      let text = play.text || play.shortText || play.description || 'Hadisə mətni yoxdur';
+      if (text.length > 150) text = text.substring(0, 147) + '...';
+      
       const type = play.type?.text || play.type?.description || '';
       
       return {
@@ -214,9 +215,14 @@ module.exports = {
               }).join('\n');
             }
 
+            // 🔴 LİMİT YOXLAMASI: Əgər mətn 4000 simvolu keçirsə, kəsirik
+            if (eventText.length > 4000) {
+              eventText = eventText.substring(0, 4000) + '\n\n*... (davamı çox uzun olduğu üçün göstərilmir)*';
+            }
+
             const detailEmbed = new EmbedBuilder()
               .setTitle(`⚽ Oyun Detalları`)
-              .setDescription(`**Hadisələr:**\n${eventText}`)
+              .setDescription(eventText)
               .setColor(0x00ff88)
               .setFooter({ text: 'ASTROL Bot • Futbol Mərkəzi (ESPN)' });
 
