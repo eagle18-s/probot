@@ -1,6 +1,7 @@
 const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { createCanvas } = require('@napi-rs/canvas');
 
+// Komanda adlarını ESPN liqa kodu və komanda ID-si ilə əlaqələndirən xəritə
 const TEAM_MAP = {
   'liverpool': { id: 364, league: 'eng.1', name: 'Liverpool' },
   'barcelona': { id: 83, league: 'esp.1', name: 'Barcelona' },
@@ -57,14 +58,10 @@ async function createFixturesCanvas(teamName, events) {
     const home = comp.competitors.find(c => c.homeAway === 'home');
     const away = comp.competitors.find(c => c.homeAway === 'away');
     
-    // DÜZƏLİŞ: ESPN-də komanda adı "team.displayName" və ya "team.name" ola bilər
     const homeName = home?.team?.displayName || home?.team?.name || 'Bilinməyən';
     const awayName = away?.team?.displayName || away?.team?.name || 'Bilinməyən';
-    
-    // DÜZƏLİŞ: Hesab bəzən "score" və ya "score.displayValue" ola bilər
     const homeScore = home?.score?.displayValue || home?.score || '-';
     const awayScore = away?.score?.displayValue || away?.score || '-';
-    
     const date = new Date(event.date).toLocaleDateString('az-AZ');
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
@@ -106,19 +103,23 @@ async function getMatchEvents(leagueSlug, eventId) {
     const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSlug}/summary?event=${eventId}`);
     const data = await res.json();
     
-    // DÜZƏLİŞ: ESPN-in hadisə strukturu fərqlidir. 
-    // Əgər "commentary" yoxdursa, boş qaytarırıq.
-    if (!data.commentary) return [];
+    // ESPN bəzən hadisələri "commentary", bəzən isə "keyEvents" kimi qaytarır
+    const rawEvents = data.commentary || data.keyEvents || data.plays || [];
     
-    return data.commentary.map(c => {
-      const play = c.play;
+    if (!rawEvents.length) return [];
+    
+    return rawEvents.map(c => {
+      const play = c.play || c;
       if (!play) return null;
       
-      // DÜZƏLİŞ: Hadisə tipini və mətnini təhlükəsiz şəkildə çıxarırıq
+      // Hadisə mətnini və tipini təhlükəsiz çıxarırıq
+      const text = play.text || play.shortText || play.description || 'Hadisə mətni yoxdur';
+      const type = play.type?.text || play.type?.description || '';
+      
       return {
-        minute: play.clock?.displayValue || '',
-        type: play.type?.text || '',
-        text: play.text || 'Hadisə mətni yoxdur',
+        minute: play.clock?.displayValue || play.clock?.minutes || '',
+        type: type,
+        text: text,
         scoringPlay: play.scoringPlay || false
       };
     }).filter(Boolean);
@@ -153,7 +154,6 @@ module.exports = {
         const home = comp.competitors.find(c => c.homeAway === 'home');
         const away = comp.competitors.find(c => c.homeAway === 'away');
         
-        // DÜZƏLİŞ: Menyu üçün də təhlükəsiz ad və hesab çıxarırıq
         const homeName = home?.team?.displayName || home?.team?.name || 'Bilinməyən';
         const awayName = away?.team?.displayName || away?.team?.name || 'Bilinməyən';
         const homeScore = home?.score?.displayValue || home?.score || '-';
@@ -202,7 +202,7 @@ module.exports = {
             
             let eventText = '';
             if (!events.length) {
-              eventText = '*Bu oyunda heç bir hadisə qeydə alınmayıb və ya ESPN bu oyun üçün məlumat təqdim etmir.*';
+              eventText = '*Bu oyun üçün ESPN detallı hadisə məlumatı təqdim etmir.*';
             } else {
               eventText = events.map(ev => {
                 let icon = '📌';
@@ -224,7 +224,7 @@ module.exports = {
 
           } catch (err) {
             console.error('ESPN Detay Xətası:', err);
-            await i.editReply({ content: '❌ Oyun detalları yüklənərkən xəta baş verdi. (ESPN bu oyun üçün məlumat vermir).' });
+            await i.editReply({ content: '❌ Oyun detalları yüklənərkən xəta baş verdi.' });
           }
         }
       });
