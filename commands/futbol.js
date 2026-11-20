@@ -1,59 +1,38 @@
 const { AttachmentBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const { createCanvas } = require('@napi-rs/canvas');
 
-// ESPN API — API Key tələb etmir
-const ESPN_BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer';
+// Komanda adlarını ESPN liqa kodu və komanda ID-si ilə əlaqələndirən xəritə
+const TEAM_MAP = {
+  'liverpool': { id: 364, league: 'eng.1', name: 'Liverpool' },
+  'barcelona': { id: 83, league: 'esp.1', name: 'Barcelona' },
+  'real madrid': { id: 86, league: 'esp.1', name: 'Real Madrid' },
+  'manchester united': { id: 360, league: 'eng.1', name: 'Manchester United' },
+  'manchester city': { id: 382, league: 'eng.1', name: 'Manchester City' },
+  'arsenal': { id: 359, league: 'eng.1', name: 'Arsenal' },
+  'chelsea': { id: 363, league: 'eng.1', name: 'Chelsea' },
+  'bayern munich': { id: 132, league: 'ger.1', name: 'Bayern Munich' },
+  'juventus': { id: 111, league: 'ita.1', name: 'Juventus' },
+  'psg': { id: 160, league: 'fra.1', name: 'Paris Saint-Germain' },
+};
 
 // Komandanın son 5 oyununu gətirən funksiya
-async function getLastMatches(teamName) {
+async function getLastMatches(teamKey) {
+  const team = TEAM_MAP[teamKey.toLowerCase()];
+  if (!team) return null;
+
   try {
-    // ESPN-də komanda axtarışı üçün əvvəlcə liqaları yoxlaya bilərik, amma ən asanı birbaşa komandanın oyunlarını axtarmaqdır.
-    // ESPN-in "search" endpoint-i olmadığı üçün, istifadəçinin yazdığı komanda adını birbaşa sorğuya əlavə edirik.
-    // Daha dəqiq nəticə üçün liqanı da təxmin edə bilərik, amma sadəlik üçün bütün liqalarda axtarırıq.
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${team.league}/teams/${team.id}/schedule`);
+    const data = await res.json();
     
-    // Əvvəlcə komandanın ID-sini tapmaq üçün ESPN-in ümumi komanda axtarışından istifadə edirik
-    const searchRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/teams?limit=1000`);
-    const searchData = await searchRes.json();
+    if (!data.events) return null;
     
-    // Bütün liqalardakı komandaları yoxlayırıq
-    let foundTeam = null;
-    if (searchData.sports && searchData.sports[0] && searchData.sports[0].leagues) {
-      for (const league of searchData.sports[0].leagues) {
-        const teamsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${league.slug}/teams`);
-        const teamsData = await teamsRes.json();
-        if (teamsData.sports && teamsData.sports[0] && teamsData.sports[0].leagues) {
-          const teams = teamsData.sports[0].leagues[0].teams;
-          if (teams) {
-            const match = teams.find(t => 
-              t.team.displayName.toLowerCase().includes(teamName.toLowerCase()) ||
-              t.team.name.toLowerCase().includes(teamName.toLowerCase()) ||
-              t.team.shortDisplayName.toLowerCase().includes(teamName.toLowerCase())
-            );
-            if (match) {
-              foundTeam = { ...match.team, leagueSlug: league.slug };
-              break;
-            }
-          }
-        }
-        if (foundTeam) break;
-      }
-    }
-
-    if (!foundTeam) return null;
-
-    // Komandanın son 5 oyununu gətiririk
-    const scheduleRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${foundTeam.leagueSlug}/teams/${foundTeam.id}/schedule`);
-    const scheduleData = await scheduleRes.json();
-    
-    if (!scheduleData.events) return null;
-    
-    // Son 5 oyunu götürürük (tarixə görə sıralayırıq)
-    const events = scheduleData.events
+    // Son 5 tamamlanmış oyunu götürürük
+    const events = data.events
       .filter(e => e.competitions && e.competitions[0].status.type.completed)
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 5);
 
-    return { team: foundTeam, events, leagueSlug: foundTeam.leagueSlug };
+    return { team, events, leagueSlug: team.league };
   } catch (err) {
     console.error('ESPN API Xətası:', err);
     return null;
@@ -61,7 +40,7 @@ async function getLastMatches(teamName) {
 }
 
 // Son 5 oyunu Canvas ilə çəkən funksiya
-async function createFixturesCanvas(teamName, events, teamId) {
+async function createFixturesCanvas(teamName, events) {
   const canvas = createCanvas(800, 600);
   const ctx = canvas.getContext('2d');
 
@@ -86,11 +65,7 @@ async function createFixturesCanvas(teamName, events, teamId) {
     const awayName = away.team.displayName;
     const homeScore = home.score || '-';
     const awayScore = away.score || '-';
-    
-    // Tarix formatı
     const date = new Date(event.date).toLocaleDateString('az-AZ');
-    // Liqa adı (event-dən götürürük)
-    const league = event.season?.slug || 'Liqa';
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.beginPath();
@@ -100,7 +75,7 @@ async function createFixturesCanvas(teamName, events, teamId) {
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '14px Sans';
     ctx.textAlign = 'left';
-    ctx.fillText(`${league.toUpperCase()} • ${date}`, 70, y - 5);
+    ctx.fillText(`${event.season?.slug || 'Liqa'} • ${date}`, 70, y - 5);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px Sans';
@@ -134,9 +109,7 @@ async function getMatchEvents(leagueSlug, eventId) {
     
     if (!data.commentary) return [];
     
-    // ESPN-in commentary formatını sadələşdiririk
     return data.commentary.map(c => {
-      // ESPN-də hadisələr "play" obyektində gəlir
       const play = c.play;
       if (!play) return null;
       
@@ -144,7 +117,6 @@ async function getMatchEvents(leagueSlug, eventId) {
         minute: play.clock?.displayValue || '',
         type: play.type?.text || '',
         text: play.text || '',
-        team: play.team?.displayName || '',
         scoringPlay: play.scoringPlay || false
       };
     }).filter(Boolean);
@@ -158,7 +130,7 @@ module.exports = {
   name: 'futbol',
   aliases: ['futbol', 'match', 'oyun'],
   async execute(message, args, client, ctx) {
-    const query = args.join(' ');
+    const query = args.join(' ').trim();
     if (!query) {
       return message.reply('❌ İstifadə qaydası: `.futbol <komanda adı>`\nMəsələn: `.futbol Liverpool`');
     }
@@ -168,13 +140,12 @@ module.exports = {
     try {
       const result = await getLastMatches(query);
       if (!result || !result.events.length) {
-        return message.reply(`❌ **${query}** adlı komanda və ya son oyunlar tapılmadı.`);
+        return message.reply(`❌ **${query}** adlı komanda tapılmadı.\nDəstəklənən komandalar: Liverpool, Barcelona, Real Madrid, Manchester United, Arsenal, Chelsea və s.`);
       }
 
-      const buffer = await createFixturesCanvas(query, result.events, result.team.id);
+      const buffer = await createFixturesCanvas(result.team.name, result.events);
       const attachment = new AttachmentBuilder(buffer, { name: 'futbol.png' });
 
-      // Select Menu — hər oyun üçün bir seçim
       const options = result.events.map((event, index) => {
         const comp = event.competitions[0];
         const home = comp.competitors.find(c => c.homeAway === 'home');
@@ -198,7 +169,7 @@ module.exports = {
       const row = new ActionRowBuilder().addComponents(menu);
 
       const embed = new EmbedBuilder()
-        .setTitle(`⚽ ${query} - Son 5 Oyun`)
+        .setTitle(`⚽ ${result.team.name} - Son 5 Oyun`)
         .setDescription('Aşağıdakı menyudan oyun seçərək hadisələrə baxa bilərsiniz.')
         .setColor(0x5865F2)
         .setImage('attachment://futbol.png')
