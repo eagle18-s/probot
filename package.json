@@ -1,7 +1,7 @@
 {
   "name": "astrol-bot",
-  "version": "2.2.0",
-  "description": "ASTROL - Gelişmiş Discord Botu (Moderasiya, AI, Canvas, Riyaziyyat, TTS)",
+  "version": "2.3.0",
+  "description": "ASTROL - Gelişmiş Discord Botu (Moderasiya, AI, Canvas, Riyaziyyat, TTS, Veb Panel)",
   "main": "index.js",
   "engines": {
     "node": ">=18.0.0"
@@ -17,7 +17,8 @@
     "@discordjs/voice": "^0.17.0",
     "dotenv": "^16.4.5",
     "mathjs": "^12.4.0",
-    "google-tts-api": "^2.0.2"
+    "google-tts-api": "^2.0.2",
+    "cookie-session": "^2.1.0"
   },
   "keywords": [
     "discord",
@@ -26,7 +27,8 @@
     "canvas",
     "math",
     "ai",
-    "tts"
+    "tts",
+    "dashboard"
   ],
   "author": "eagle18-s",
   "license": "MIT"
