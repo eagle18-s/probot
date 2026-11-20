@@ -334,7 +334,9 @@ module.exports = {
             { cmd: '.ship [@üzvə1] [@üzvə2]', desc: 'Saqqızın oğurlanıb? Səni Dəcəl 😁' },
             { cmd: '.ship', desc: 'Gəl sənində başını bağlayaq .' },
             { cmd: '.gizli <mesaj>', desc: 'Mesajı DM-dən göndərir' },
-            { cmd: '.sual-tap', desc: '1-100 arası ədəd tapma oyunu' }
+            { cmd: '.sual-tap', desc: '1-100 arası ədəd tapma oyunu' },
+            { cmd: '.səsli-mesaj <mətn>', desc: 'Mətni səsə çevirib mp3 kimi göndərir' },
+            { cmd: '.riyazyyat <tənlik>', desc: 'Tənliyi həll edir, qrafik çəkir ' }
           ]
         },
         davet: {
