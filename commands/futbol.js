@@ -103,7 +103,7 @@ async function getMatchEvents(leagueSlug, eventId) {
     const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueSlug}/summary?event=${eventId}`);
     const data = await res.json();
     
-    // ESPN bəzən hadisələri "commentary", bəzən isə "keyEvents" kimi qaytarır
+    // ESPN müxtəlif strukturlar qaytara bilər: commentary, keyEvents, plays
     const rawEvents = data.commentary || data.keyEvents || data.plays || [];
     
     if (!rawEvents.length) return [];
