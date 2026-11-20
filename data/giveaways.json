@@ -15,7 +15,9 @@
     "channelId": "1571749230568013897",
     "prize": "Bot",
     "winnersCount": 1,
-    "participants": [],
+    "participants": [
+      "1561721639518081105"
+    ],
     "endAt": 1795202152219,
     "ended": false
   }
