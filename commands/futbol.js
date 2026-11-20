@@ -107,23 +107,33 @@ async function getMatchEvents(leagueSlug, eventId) {
     
     if (!rawEvents.length) return [];
     
-    return rawEvents.map(c => {
+    // 🔴 YALNIZ QOL, KART VƏ DƏYİŞİKLİK HADİSƏLƏRİNİ FİLTRLƏYİRİK
+    const filtered = rawEvents.map(c => {
       const play = c.play || c;
       if (!play) return null;
       
-      // Mətni qısaldırıq (maksimum 150 simvol)
-      let text = play.text || play.shortText || play.description || 'Hadisə mətni yoxdur';
-      if (text.length > 150) text = text.substring(0, 147) + '...';
+      const typeText = (play.type?.text || play.type?.description || '').toLowerCase();
+      const isGoal = play.scoringPlay === true || typeText.includes('goal');
+      const isCard = typeText.includes('card') || typeText.includes('yellow') || typeText.includes('red');
+      const isSub = typeText.includes('substitution') || typeText.includes('sub');
       
-      const type = play.type?.text || play.type?.description || '';
+      // Əgər bu 3 növdən biri deyilsə, keç (null qaytar)
+      if (!isGoal && !isCard && !isSub) return null;
+      
+      let text = play.text || play.shortText || play.description || '';
+      if (text.length > 200) text = text.substring(0, 197) + '...';
       
       return {
         minute: play.clock?.displayValue || play.clock?.minutes || '',
-        type: type,
+        type: typeText,
         text: text,
-        scoringPlay: play.scoringPlay || false
+        isGoal,
+        isCard,
+        isSub
       };
     }).filter(Boolean);
+
+    return filtered;
   } catch (err) {
     console.error('ESPN Hadisə Xətası:', err);
     return [];
@@ -203,19 +213,22 @@ module.exports = {
             
             let eventText = '';
             if (!events.length) {
-              eventText = '*Bu oyun üçün ESPN detallı hadisə məlumatı təqdim etmir.*';
+              eventText = '*Bu oyun üçün qol, kart və ya dəyişiklik məlumatı tapılmadı.*';
             } else {
               eventText = events.map(ev => {
                 let icon = '📌';
-                if (ev.scoringPlay) icon = '⚽';
-                else if (ev.type.toLowerCase().includes('card')) icon = '🟨';
-                else if (ev.type.toLowerCase().includes('substitution')) icon = '🔄';
+                if (ev.isGoal) icon = '⚽';
+                else if (ev.isCard) {
+                  if (ev.type.includes('red')) icon = '🟥';
+                  else icon = '🟨';
+                }
+                else if (ev.isSub) icon = '🔄';
                 
                 return `${icon} **${ev.minute}** - ${ev.text}`;
               }).join('\n');
             }
 
-            // 🔴 LİMİT YOXLAMASI: Əgər mətn 4000 simvolu keçirsə, kəsirik
+            // Limit yoxlaması (4096 simvol)
             if (eventText.length > 4000) {
               eventText = eventText.substring(0, 4000) + '\n\n*... (davamı çox uzun olduğu üçün göstərilmir)*';
             }
