@@ -49,15 +49,19 @@ for (const file of eventFiles) {
 }
 
 // ==================== EXPRESS & WEB SITE ====================
-const app = express();
-app.use(express.json()); // Panel üçün JSON body parser
 
-// Panel funksiyasını yüklə
+const app = express();
+app.use(express.json());
+
 const { setupWebPanel } = require('./utils/webPanel');
 setupWebPanel(app, client);
 
-// Köhnə '/' marşrutu artıq paneldədir, amma 'health' qalsın:
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 Web server ${PORT} portunda işləyir (0.0.0.0)`);
+});
 
 // ==================== KEEP-ALIVE VƏ DM SİSTEMİ ====================
 setInterval(async () => {
