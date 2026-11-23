@@ -6,6 +6,9 @@ async function createUserCard(member) {
   const canvas = createCanvas(900, 650);
   const ctx = canvas.getContext('2d');
 
+  // 🔴 STATUS-U ƏN YUXARIDA TƏYİN EDİRİK (Xətanın həlli)
+  const status = member.presence?.status || 'offline';
+
   // ===== 1. ARXA FON =====
   const gradient = ctx.createLinearGradient(0, 0, 900, 650);
   gradient.addColorStop(0, '#0f0c29');
@@ -23,7 +26,6 @@ async function createUserCard(member) {
       ctx.drawImage(banner, 0, 0, 900, 250);
       ctx.restore();
       
-      // Banner üzərinə qradient pərdə
       const bannerGrad = ctx.createLinearGradient(0, 150, 0, 250);
       bannerGrad.addColorStop(0, 'rgba(15,12,41,0)');
       bannerGrad.addColorStop(1, 'rgba(15,12,41,1)');
@@ -49,21 +51,19 @@ async function createUserCard(member) {
     ctx.drawImage(avatar, avatarX - avatarRadius, avatarY - avatarRadius, avatarRadius * 2, avatarRadius * 2);
     ctx.restore();
 
-    // Avatar çərçivəsi
     ctx.strokeStyle = member.displayHexColor !== '#000000' ? member.displayHexColor : '#5865F2';
     ctx.lineWidth = 6;
     ctx.beginPath();
     ctx.arc(avatarX, avatarY, avatarRadius, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Onlayn status nöqtəsi
+    // Status nöqtəsi
     const statusColors = {
       online: '#00ff88',
       idle: '#ffaa00',
       dnd: '#ff5555',
       offline: '#72767d'
     };
-    const status = member.presence?.status || 'offline';
     ctx.fillStyle = statusColors[status] || '#72767d';
     ctx.beginPath();
     ctx.arc(avatarX + 60, avatarY + 60, 18, 0, Math.PI * 2);
@@ -122,13 +122,11 @@ async function createUserCard(member) {
         if (roleY > 380) break;
       }
 
-      // Rol qutusu
       ctx.fillStyle = role.hexColor === '#000000' ? 'rgba(255,255,255,0.1)' : role.hexColor + '33';
       ctx.beginPath();
       ctx.roundRect(roleX, roleY - 20, boxWidth, 30, 15);
       ctx.fill();
 
-      // Rol adı
       ctx.fillStyle = role.hexColor === '#000000' ? '#ffffff' : role.hexColor;
       ctx.fillText(roleName, roleX + 15, roleY);
       
@@ -137,13 +135,6 @@ async function createUserCard(member) {
   }
 
   // ===== 7. STATİSTİKA QUTULARI =====
-  const stats = [
-    { label: '🆔 İstifadəçi ID', value: user.id, y: 420 },
-    { label: '📅 Hesab Yaradılma', value: `<t:${Math.floor(user.createdTimestamp / 1000)}:D>`.replace(/<t:|:D>/g, ''), y: 420 },
-    { label: '📥 Serverə Qoşulma', value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:D>`.replace(/<t:|:D>/g, ''), y: 420 },
-  ];
-
-  // Daha dəqiq tarix formatı
   const formatDate = (timestamp) => {
     const d = new Date(timestamp);
     return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
@@ -166,18 +157,15 @@ async function createUserCard(member) {
     const x = 60 + col * 270;
     const y = statY + row * 70;
 
-    // Qutu
     ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.beginPath();
     ctx.roundRect(x, y - 30, 250, 60, 12);
     ctx.fill();
 
-    // İkon və label
     ctx.fillStyle = '#a1a1a1';
     ctx.font = '14px Sans';
     ctx.fillText(`${stat.icon} ${stat.label}`, x + 15, y - 8);
 
-    // Dəyər
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 18px Sans';
     const val = String(stat.value).length > 20 ? String(stat.value).substring(0, 20) + '...' : String(stat.value);
