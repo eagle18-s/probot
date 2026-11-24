@@ -28,7 +28,7 @@ module.exports = {
       )
       .setColor(0x5865F2)
       .setThumbnail(client.user.displayAvatarURL({ size: 1024 }))
-      .setImage('https://share.google/A50c5RKt7pdzVD4Jh') // İstəsən bura öz banner linkini qoy
+      
 
       // ==== MODERASİYA ====
       .addFields({
@@ -40,15 +40,7 @@ module.exports = {
         inline: false
       })
 
-      // ==== SÜNİ İNTELLEKT ====
-      .addFields({
-        name: '🤖 **Süni İntellekt (AI)**',
-        value: 
-          '> Gemini API ilə tam inteqrasiya.\n' +
-          '> Botla söhbət edə, suallar verə və hətta kodunu soruşa bilərsən!\n' +
-          '> `.ai sən kimsən?` yaz və sehrə bax.',
-        inline: false
-      })
+
 
       // ==== CANVAS & VİZUAL ====
       .addFields({
