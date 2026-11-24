@@ -1,6 +1,6 @@
 module.exports = {
   name: 'gizli',
-  aliases: ['dm', 'gizli-mesaj', 'secret'],
+  aliases: ['msg', 'gizli-mesaj', 'secret'],
   async execute(message, args, client, ctx) {
     // Mesajı götür
     const content = args.join(' ');
