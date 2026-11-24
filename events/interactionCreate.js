@@ -1,4 +1,13 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, PermissionFlagsBits } = require('discord.js');
+const { 
+  EmbedBuilder, 
+  ActionRowBuilder, 
+  ButtonBuilder, 
+  ButtonStyle, 
+  PermissionFlagsBits,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle
+} = require('discord.js');
 const storage = require('../utils/storage');
 const { efendimLog } = require('../utils/logger');
 
@@ -6,11 +15,13 @@ module.exports = {
   name: 'interactionCreate',
   async execute(interaction, client) {
     try {
-      // ==== Butonlar ====
+      // ==========================================
+      // 1. BUTONLAR (Buttons)
+      // ==========================================
       if (interaction.isButton()) {
         const id = interaction.customId;
 
-        // --- Ticket bağlama ---
+        // --- Ticket Bağlama ---
         if (id === 'ticket_close') {
           if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
             return interaction.reply({ content: '❌ Yalnız yetkililer.', ephemeral: true });
@@ -24,6 +35,7 @@ module.exports = {
           );
           return interaction.reply({ embeds: [embed], components: [row] });
         }
+
         if (id === 'ticket_yes' || id === 'ticket_no') {
           if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator))
             return interaction.reply({ content: '❌ Yalnız yetkililer.', ephemeral: true });
@@ -35,6 +47,54 @@ module.exports = {
           await interaction.update({ content: `✅ Qeyd edildi: **${resolved}**\nKanal 5s sonra silinəcək...`, embeds: [], components: [] });
           setTimeout(() => channel.delete().catch(() => {}), 5000);
           return;
+        }
+
+        // --- DM Modal Aç ---
+        if (id.startsWith('dm_open_modal_')) {
+          const targetId = id.replace('dm_open_modal_', '');
+          
+          const modal = new ModalBuilder()
+            .setCustomId(`dm_submit_${targetId}`)
+            .setTitle('📩 Mesaj Göndər');
+
+          const titleInput = new TextInputBuilder()
+            .setCustomId('dm_title')
+            .setLabel('Embed Başlığı')
+            .setStyle(TextInputStyle.Short)
+            .setMaxLength(256)
+            .setRequired(true)
+            .setPlaceholder('Məsələn: Xoş gəldin!');
+
+          const descInput = new TextInputBuilder()
+            .setCustomId('dm_desc')
+            .setLabel('Mesaj Mətni')
+            .setStyle(TextInputStyle.Paragraph)
+            .setMaxLength(4000)
+            .setRequired(true)
+            .setPlaceholder('Mesajınızı bura yazın...');
+
+          const imageInput = new TextInputBuilder()
+            .setCustomId('dm_image')
+            .setLabel('Şəkil URL (İstəyə bağlı)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+            .setPlaceholder('https://...');
+
+          const colorInput = new TextInputBuilder()
+            .setCustomId('dm_color')
+            .setLabel('Rəng HEX (İstəyə bağlı)')
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)
+            .setPlaceholder('#5865F2');
+
+          modal.addComponents(
+            new ActionRowBuilder().addComponents(titleInput),
+            new ActionRowBuilder().addComponents(descInput),
+            new ActionRowBuilder().addComponents(imageInput),
+            new ActionRowBuilder().addComponents(colorInput)
+          );
+
+          return interaction.showModal(modal);
         }
 
         // --- Çekiliş ---
@@ -77,7 +137,7 @@ module.exports = {
           }
         }
 
-        // --- Poll ---
+        // --- Poll (Anket) ---
         if (id.startsWith('poll_')) {
           const [, pollId, optIdx] = id.split('_');
           const polls = storage.load('polls', {});
@@ -114,7 +174,9 @@ module.exports = {
         }
       }
 
-      // ==== Select Menyu (reaction roles) ====
+      // ==========================================
+      // 2. SELECT MENYU (String Select Menu)
+      // ==========================================
       if (interaction.isStringSelectMenu()) {
         if (interaction.customId.startsWith('rrsel_')) {
           const rrId = interaction.customId.slice(6);
@@ -137,6 +199,46 @@ module.exports = {
             if (!member.roles.cache.has(rId)) await member.roles.add(rId).catch(() => {});
           }
           return interaction.reply({ content: '✅ Rollar yeniləndi.', ephemeral: true });
+        }
+      }
+
+      // ==========================================
+      // 3. MODAL SUBMIT (Form Göndərildi)
+      // ==========================================
+      if (interaction.isModalSubmit()) {
+        if (interaction.customId.startsWith('dm_submit_')) {
+          const targetId = interaction.customId.replace('dm_submit_', '');
+          
+          const title = interaction.fields.getTextInputValue('dm_title');
+          const desc = interaction.fields.getTextInputValue('dm_desc');
+          const image = interaction.fields.getTextInputValue('dm_image');
+          const colorHex = interaction.fields.getTextInputValue('dm_color') || '#5865F2';
+
+          let color = 0x5865F2;
+          if (colorHex.startsWith('#') && colorHex.length === 7) {
+            color = parseInt(colorHex.replace('#', ''), 16);
+          }
+
+          const embed = new EmbedBuilder()
+            .setTitle(title)
+            .setDescription(desc)
+            .setColor(color)
+            .setTimestamp()
+            .setFooter({ text: 'ASTROL • Rəsmi Mesaj' });
+
+          if (image && image.startsWith('http')) {
+            embed.setImage(image);
+          }
+
+          try {
+            const target = await client.users.fetch(targetId);
+            await target.send({ embeds: [embed] });
+            
+            await interaction.reply({ content: `✅ Mesaj **${target.tag}** istifadəçisinə uğurla göndərildi!`, ephemeral: true });
+          } catch (err) {
+            console.error('DM Göndərmə Xətası:', err);
+            await interaction.reply({ content: `❌ Mesaj göndərilə bilmədi. İstifadəçinin DM-i bağlı ola bilər.`, ephemeral: true });
+          }
         }
       }
     } catch (e) {
