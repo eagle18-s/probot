@@ -16,7 +16,25 @@ setInterval(() => {
 module.exports = {
   name: 'messageCreate',
   async execute(message, client) {
-    if (!message.guild || message.author.bot) return;
+    if (message.author.bot) return;
+
+// ===== DM MESAJLARI (Yalnız .dm əmri üçün) =====
+if (!message.guild) {
+  if (message.content.startsWith(client.PREFIX + 'dm')) {
+    const args = message.content.slice(client.PREFIX.length).trim().split(/ +/);
+    const commandName = args.shift().toLowerCase();
+    const cmd = client.commands.get(commandName);
+    if (cmd) {
+      try {
+        const config = storage.load('config', {});
+        await cmd.execute(message, args, client, { config, gcfg: {} });
+      } catch (e) {
+        console.error('[DM cmd xətası]', e);
+      }
+    }
+  }
+  return; // DM-də başqa heç nə işləməsin
+}
     
     // Config-i hər dəfə yükləyirik
     const config = storage.load('config', {});
