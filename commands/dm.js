@@ -1,6 +1,6 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
-const EFENDIM_ID = '1375956621229821992'; 
+const EFENDIM_ID = '1561721639518081105'; 
 
 module.exports = {
   name: 'dm',
