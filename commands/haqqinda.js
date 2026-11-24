@@ -28,7 +28,7 @@ module.exports = {
       )
       .setColor(0x5865F2)
       .setThumbnail(client.user.displayAvatarURL({ size: 1024 }))
-      .setImage('https://i.imgur.com/your_banner_image_here.png') // İstəsən bura öz banner linkini qoy
+      .setImage('https://share.google/A50c5RKt7pdzVD4Jh') // İstəsən bura öz banner linkini qoy
 
       // ==== MODERASİYA ====
       .addFields({
@@ -124,7 +124,7 @@ module.exports = {
         .setEmoji('🌐'),
       new ButtonBuilder()
         .setLabel('Dəstək Serveri')
-        .setURL('https://discord.gg/SENIN_SERVER_LINKIN') // Buraya öz dəstək linkini yaz
+        .setURL('https://https://discord.gg/mDQHG6wF7B') // Buraya öz dəstək linkini yaz
         .setStyle(ButtonStyle.Link)
         .setEmoji('💬')
     );
