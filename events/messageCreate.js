@@ -89,6 +89,17 @@ if (sualTapCmd && /^\d+$/.test(message.content.trim())) {
   return sualTapCmd.execute(message, args, client, { config, gcfg });
 }
     
+// ===== ℹ️ Emoji ilə Bot Məlumatı =====
+if (message.content.trim() === 'ℹ️' || message.content.trim() === 'ℹ') {
+  const haqqindaCmd = client.commands.get('haqqinda');
+  if (haqqindaCmd && haqqindaCmd.sendInfoEmbed) {
+    await haqqindaCmd.sendInfoEmbed(message, client, message.author);
+  }
+  return;
+}
+
+// ===== Komanda Emalı =====
+if (!message.content.startsWith(client.PREFIX)) return;
     // ===== Komanda =====
     if (!message.content.startsWith(client.PREFIX)) return;
     const args = message.content.slice(client.PREFIX.length).trim().split(/ +/);
