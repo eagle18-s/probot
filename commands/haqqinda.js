@@ -34,7 +34,7 @@ async function sendInfoEmbed(target, client, author) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder().setLabel('Botu Dəvət Et').setURL(`https://discord.com/oauth2/authorize?client_id=${client.user.id}&permissions=8&scope=bot%20applications.commands`).setStyle(ButtonStyle.Link).setEmoji('🚀'),
     new ButtonBuilder().setLabel('Veb Panel').setURL(process.env.RENDER_EXTERNAL_URL || 'https://your-app.onrender.com').setStyle(ButtonStyle.Link).setEmoji('🌐'),
-    new ButtonBuilder().setLabel('Dəstək Serveri').setURL('https://discord.gg/SENIN_SERVER_LINKIN').setStyle(ButtonStyle.Link).setEmoji('💬')
+    new ButtonBuilder().setLabel('Dəstək Serveri').setURL('https://discord.gg/mDQHG6wF7B').setStyle(ButtonStyle.Link).setEmoji('💬')
   );
 
   await target.reply({ embeds: [embed], components: [row] });
