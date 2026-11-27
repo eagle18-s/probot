@@ -76,7 +76,7 @@
     ]
   },
   "1573780457164902521": {
-    "nextId": 2,
+    "nextId": 3,
     "list": [
       {
         "id": 1,
@@ -86,6 +86,14 @@
         "reason": "Sebep belirtilmedi",
         "date": 1795767067288,
         "duration": "12h"
+      },
+      {
+        "id": 2,
+        "type": "UNMUTE",
+        "targetId": "1273722711490822201",
+        "modId": "1561721639518081105",
+        "reason": "Timeout qaldırıldı",
+        "date": 1795767086133
       }
     ]
   }
